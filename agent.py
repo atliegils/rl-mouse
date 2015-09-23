@@ -1,19 +1,13 @@
 import math, random
 import time, traceback
 from game import Game
+from learners import HistoryManager, SARSA
 
 # CAT, CHEESE AND TRAP AGENT
 class Agent:
-
     def __init__(self, game):
         self.game = game
         self.score = 0
-        self.learners = []
-        self.prev_state = None
-        self.prev_action = None
-
-    def add_learner(self, learner):
-        self.learners.append(learner)
 
     def item_at(self, coord):
         if self.game.cheese == coord:
@@ -116,4 +110,123 @@ class Agent:
     def reset_game(self):
         self.score = 0
         self.game.reset()
+
+# Agent that tracks history
+class HistoricalAgent(Agent):
+    def __init__(self, game, actions, num_history_steps=2, epsilon=0.1, fov=3):
+        self.learners = []
+        self.game = game
+        self.score = 0
+        self.fov = fov
+        self.create_learners(num_history_steps, epsilon, actions)
+        self.cr = 5
+        self.tr = 10
+        self.hr = 1
+
+    def adjust_rewards(self, cr, tr, hr):
+        self.cr = cr
+        self.tr = tr
+        self.hr = hr
+
+    def create_learners(self, levels, epsilon, actions):
+        bottom_level = HistoryManager(epsilon)
+        bottom_level.history_learner = SARSA(actions, epsilon)
+        bottom_level.left_learner = SARSA(actions, epsilon)
+        top = bottom_level
+        for i in range(levels-1):
+            top.q = self.default_q()
+            next_level = HistoryManager(epsilon)
+            next_level.left_learner = SARSA(actions, epsilon)
+            next_level.history_learner = top
+            top = next_level
+        self.main_learner = top
+        self.register_learners()
+
+    def register_learners(self):
+        top = self.main_learner
+        while top:
+            try:
+                if top.left_learner:
+                    self.learners.append(top.left_learner)
+            except AttributeError:
+                self.learners.append(top) # top doesn't have a left learner because it's SARSA
+                break
+            try:
+                top = top.history_learner
+            except AttributeError:
+                break
+        for ll in self.learners:
+            print 'registered learner {0}'.format(ll)
+        return # done, we hit a dead end
+
+    def perform(self, verbose=0):
+        self.verbose = verbose
+        state_now = self.get_fov(self.fov)
+        self.main_learner.set_state(state_now) # sets all states
+        final_action = self.decide(self.main_learner) # selects recursively
+        if verbose == 3:
+            print 'mouse is facing {0} with state {1}'.format(self.game.direction, state_now)
+            self.game.render()
+            c = raw_input('continue...')
+        self.game.play(final_action)
+        reward = self.check_reward()
+        if reward == 1:
+            value = self.cr
+        elif reward == -1:
+            value = -self.tr
+        else:
+            value = -self.hr
+        self.reward(value)
+        return reward
+
+    # deciding for top (main) learner
+    def decide(self, choice):
+        self.selections = []
+        learner = self.main_learner
+        decision = self._decide(learner)
+        if self.verbose == 3: print ''
+#       unselected = [x for x in self.learners if x not in self.selections]
+#       for ll in unselected:
+        for ll in self.learners:
+            ll.update_action(decision)
+            if self.verbose == 3:
+                print '{0} - {1} - {2} - {3} // {4}'.format(ll.last_state, ll.current_state, ll.last_action, ll.current_action, ll)
+        return decision
+
+    def _decide(self, learner):
+        choice = learner.select()
+        if self.verbose == 3:
+#           print '{0} selected {1}'.format(learner, choice)
+            print ' -> {0}'.format(choice),
+        if choice == 'now':
+            new_learner = learner.left_learner
+        elif choice == 'next':
+            new_learner = learner.history_learner
+        else: # final choice
+            return choice
+        self.selections.append(learner)
+        return self._decide(new_learner)
+
+    def reward(self, value):
+        for s in self.selections:
+            s.learn(value)
+            if self.verbose == 3 and value != -2:
+                from pprint import pprint
+                print 'Q-matrix of {0}:'.format(s)
+                pprint(s.q)
+                print 'H{0} rewarded with {1}.'.format(s, value)
+        self.selections = []
+        for s in self.learners:
+            if 'forward' in s.actions:
+                s.learn(value)
+                if self.verbose == 3 and value != -2:
+                    from pprint import pprint
+                    print 'Q-matrix of {0}:'.format(s)
+                    pprint(s.q)
+                    print 'S{0} rewarded with {1}.'.format(s, value)
+
+    def default_q(self):
+        d = {(0,0): {'now': -5.0, 'next': 10.0}}
+        return {}
+        return d
 

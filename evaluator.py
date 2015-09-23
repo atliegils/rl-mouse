@@ -2,9 +2,20 @@
 import argparse
 import math, os, sys, traceback
 import agent, threading, time
+import pickle
 from learners import QLearn, SARSA
 from game import Game
 from pprint import pprint
+
+def save_policy(learner, name):
+    policy = learner.q
+    with open(name + '.policy', 'wb') as f:
+        pickle.dump(policy, f)
+
+def load_policy(learner, name):
+    with open(name + '.policy', 'rb') as f:
+        policy = pickle.loads(f.read())
+        learner.q = policy
 
 def administer_reward(learner, reward, next_state=None):
     if reward == 1:
@@ -52,7 +63,7 @@ def train(player, learner, max_runs=10000):
             t_start = time.time()
         i = i + 1
         state1 = player.get_fov(args.fov)
-        action1 = learner.select(state1)
+#       action1 = learner.select(state1)
         player.game.play(action1)
         reward = player.check_reward()
         state2 = player.get_fov(args.fov)
@@ -97,6 +108,48 @@ def dist_to_cheese(game):
             add = 2
 
     return dist + add
+
+def test_HLearner(player, max_runs=5000):
+    player.game.suppressed = True
+    outfile = 'test.txt'
+    if args.outfile:
+        outfile = args.outfile
+    # no warning
+
+    i = 0
+    start_step = 0
+    deaths = 0
+    dist = dist_to_cheese(player.game)
+    data = []
+    last = [0]
+    while len(data) < max_runs:
+        i = i + 1
+        reward = player.perform(verbose=args.verbose)
+        if reward == 1:
+            if data:
+                last = [x[0] for x in data[-100:]]
+            average = sum(last) / float(len(last))
+            score = dist / float(i - start_step)
+            dp = (score, deaths, average)
+            data.append(dp)
+            start_step = i
+            deaths = 0
+            player.reset_game()
+            dist = dist_to_cheese(player.game)
+            # verbose
+            if args.verbose == 2:
+                print average, deaths, score
+            if args.verbose == 1 or args.verbose > 3:
+                print '{0}/{1}'.format(len(data), max_runs)
+            # end verbose
+        if reward == -1:
+            deaths += 1
+            dist = dist_to_cheese(player.game) # the player was respawned
+#           if args.verbose == 3:
+#               args.verbose = 2
+    with open(outfile, 'w') as f:
+        for dp in data:
+            f.write(','.join(map(str,list(dp))) + '\n')
 
 def benchmark(player, max_runs=5000):
     actions = ['left', 'forward', 'right']
@@ -269,7 +322,6 @@ def evaluate(player, max_runs=5000):
         print 'all done'
         sys.exit(0)
 
-
 # interactive command line
 def command(player):
     time.sleep(2) # give the main thread some time to prompt the user etc before taking over
@@ -293,16 +345,28 @@ def command(player):
 
 def main():
     global args
+    # configure game object
     game = Game()
+    g = args.grid_size
+    game.set_size(g, g)
     if args.difficulty == 2:
         game.cat = True
     elif args.difficulty == 0:
         game.easy = True
-    player = agent.Agent(game)
+    # configure player object
+    if args.meta:
+        player = agent.HistoricalAgent(game, ['left', 'forward', 'right'], epsilon=args.epsilon, fov=args.fov, num_history_steps=0)
+        player.adjust_rewards(abs(args.cheese_reward), abs(args.trap_reward), abs(args.hunger_reward))
+    else:
+        player = agent.Agent(game)
+    # boilerplate for CLI
     t = threading.Thread(target=command, args=(player,))
     t.daemon = True
     t.start()
-    if args.benchmark:
+    # launch point
+    if args.meta:
+        test_HLearner(player, max_runs=args.max_actions)
+    elif args.benchmark:
         benchmark(player, max_runs=args.max_actions)
     else:
         evaluate(player, max_runs=args.max_actions)
@@ -324,6 +388,7 @@ if __name__ == '__main__':
     parser.add_argument('--fov', type=int, default=3, help='how far the agent can see')
     parser.add_argument('-v', '--verbose', action='count', help='increase output verbosity')
     parser.add_argument('-b', '--benchmark', action='store_true', help='normalize data by counting steps')
+    parser.add_argument('--meta', action='store_true', help='test history agent')
     parser.add_argument('--test', action='store_true', help='debug')
     args = parser.parse_args()
     try:

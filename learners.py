@@ -4,7 +4,6 @@ class NotImplementedException(Exception):
     pass
 
 class BaseLearner:
-
     def __init__(self, actions, epsilon=0.1, alpha=0.2, gamma=0.8):
         self.q = {}
         self.epsilon = epsilon
@@ -13,14 +12,14 @@ class BaseLearner:
         self.actions = actions
         self.last_reward = 0
         self.last_action = None
-        self.last_state = None
+        self.last_state  = None
         self.current_action = None
-        self.current_state = None
+        self.current_state  = None
 
     def set_state(self, state):
-        self.last_state = self.current_state
-        self.last_action = self.current_action
-        self.current_state = state
+        self.last_state     = self.current_state
+        self.last_action    = self.current_action
+        self.current_state  = state
         self.current_action = None
 
     def get_default_row(self):
@@ -50,6 +49,10 @@ class BaseLearner:
         self.set_state(state)
         return self.select()
 
+    # sets the current action without selection (someone else made this decision)
+    def update_action(self, action):
+        self.current_action = action
+
     def select(self):
         state = self.current_state
         if random.random < self.epsilon:
@@ -74,7 +77,46 @@ class QLearn(BaseLearner):
 
 class SARSA(BaseLearner):
     def learn(self, reward):
-        qnext = self.getQ(self.current_state, self.current_action)
-        self.learnQ(self.last_state, self.last_action, self.last_reward, qnext)
+        if self.current_action and self.last_action and self.current_state and self.last_state:
+            qnext = self.getQ(self.current_state, self.current_action)
+            self.learnQ(self.last_state, self.last_action, self.last_reward, qnext)
+        else:
+            print 'foo'
         self.last_reward = reward
 
+class HistoryManager(BaseLearner):
+
+    def __init__(self, epsilon=0.1, alpha=0.2, gamma=0.8):
+        self.q = {}
+        self.epsilon = epsilon
+        self.alpha   = alpha
+        self.gamma   = gamma
+        self.last_reward = 0
+        self.last_action = None
+        self.last_state  = None
+        self.current_action = None
+        self.current_state  = None
+        self.left_learner = None
+        self.history_learner = None
+        self.actions = ['now', 'next']
+
+    def set_state(self, state):
+        self.left_learner.set_state(state)
+        if self.current_state:
+            self.history_learner.set_state(self.current_state)
+        self.last_state     = self.current_state
+        self.last_action    = self.current_action
+        self.current_state  = state
+        self.current_action = None
+
+    def learn(self, reward):
+        qnext = self.getQ(self.current_state, self.current_action)
+        if self.last_action:
+            self.learnQ(self.last_state, self.last_action, self.last_reward, qnext)
+        self.last_reward = reward
+        if self.current_action   == 'now':
+            self.left_learner.learn(reward)
+        elif self.current_action == 'next':
+            self.history_learner.learn(reward)
+        else:
+            raise Exception('Somehow neither learner was selected!')
