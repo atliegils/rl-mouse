@@ -1,13 +1,23 @@
 import math, random
 import time, traceback
 from game import Game
-from learners import HistoryManager, SARSA
+from learners import HistoryManager, SARSA, MetaLearner
 
 # CAT, CHEESE AND TRAP AGENT
 class Agent:
-    def __init__(self, game):
+    def __init__(self, game, actions, epsilon=0.1, fov=3):
         self.game = game
         self.score = 0
+        self.cr = 5
+        self.tr = 10
+        self.hr = 1
+        self.fov = fov
+        self.main_learner = SARSA(actions, epsilon)
+
+    def adjust_rewards(self, cr, tr, hr):
+        self.cr = cr
+        self.tr = tr
+        self.hr = hr
 
     def item_at(self, coord):
         if self.game.cheese == coord:
@@ -111,22 +121,43 @@ class Agent:
         self.score = 0
         self.game.reset()
 
+    def decide(self, learner):
+        return learner.select()
+
+    def reward(self, value):
+        self.main_learner.learn(value)
+     
+    def perform(self, verbose=0):
+        self.verbose = verbose
+        state_now = self.get_fov(self.fov)
+        self.main_learner.set_state(state_now) # sets all states
+        final_action = self.decide(self.main_learner) # selects recursively
+        if verbose == 3:
+            print 'mouse is facing {0} with state {1}'.format(self.game.direction, state_now)
+            self.game.render()
+            c = raw_input('continue...')
+        self.game.play(final_action)
+        reward = self.check_reward()
+        if reward == 1:
+            value = self.cr
+        elif reward == -1:
+            value = -abs(self.tr)
+        else:
+            value = -abs(self.hr)
+        self.reward(value)
+        return reward
+
 # Agent that tracks history
 class HistoricalAgent(Agent):
-    def __init__(self, game, actions, num_history_steps=2, epsilon=0.1, fov=3):
+    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=3):
         self.learners = []
         self.game = game
         self.score = 0
         self.fov = fov
-        self.create_learners(num_history_steps, epsilon, actions)
+        self.create_learners(levels, epsilon, actions)
         self.cr = 5
         self.tr = 10
         self.hr = 1
-
-    def adjust_rewards(self, cr, tr, hr):
-        self.cr = cr
-        self.tr = tr
-        self.hr = hr
 
     def create_learners(self, levels, epsilon, actions):
         bottom_level = HistoryManager(epsilon)
@@ -134,13 +165,14 @@ class HistoricalAgent(Agent):
         bottom_level.left_learner = SARSA(actions, epsilon)
         top = bottom_level
         for i in range(levels-1):
-            top.q = self.default_q()
+            top.q = {}
             next_level = HistoryManager(epsilon)
             next_level.left_learner = SARSA(actions, epsilon)
             next_level.history_learner = top
             top = next_level
         self.main_learner = top
         self.register_learners()
+        self.main_learner.printH()
 
     def register_learners(self):
         top = self.main_learner
@@ -158,26 +190,6 @@ class HistoricalAgent(Agent):
         for ll in self.learners:
             print 'registered learner {0}'.format(ll)
         return # done, we hit a dead end
-
-    def perform(self, verbose=0):
-        self.verbose = verbose
-        state_now = self.get_fov(self.fov)
-        self.main_learner.set_state(state_now) # sets all states
-        final_action = self.decide(self.main_learner) # selects recursively
-        if verbose == 3:
-            print 'mouse is facing {0} with state {1}'.format(self.game.direction, state_now)
-            self.game.render()
-            c = raw_input('continue...')
-        self.game.play(final_action)
-        reward = self.check_reward()
-        if reward == 1:
-            value = self.cr
-        elif reward == -1:
-            value = -self.tr
-        else:
-            value = -self.hr
-        self.reward(value)
-        return reward
 
     # deciding for top (main) learner
     def decide(self, choice):
@@ -225,8 +237,85 @@ class HistoricalAgent(Agent):
                     pprint(s.q)
                     print 'S{0} rewarded with {1}.'.format(s, value)
 
-    def default_q(self):
-        d = {(0,0): {'now': -5.0, 'next': 10.0}}
-        return {}
-        return d
+class MetaAgent(Agent):
+    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=3):
+        self.game = game
+        self.score = 0
+        self.fov = fov
+        self.create_learners(epsilon, actions, fov, levels)
 
+    def create_learners(self, epsilon, actions, fov, levels):
+        # build from bottom up
+        left = HistoryManager(epsilon)
+        left.left_learner = SARSA(actions, epsilon)
+        left.history_learner = SARSA(actions, epsilon)
+        right = HistoryManager(epsilon)
+        right.left_learner = SARSA(actions, epsilon)
+        right.history_learner = SARSA(actions, epsilon)
+        for i in range(levels-1):
+            left.q = {}
+            right.q = {}
+            next_level = HistoryManager(epsilon)
+            next_level.left_learner = SARSA(actions, epsilon)
+            next_level.history_learner = left
+            left = next_level
+            next_level = HistoryManager(epsilon)
+            next_level.left_learner = SARSA(actions, epsilon)
+            next_level.history_learner = right
+            right = next_level
+        # left and right now point to top nodes
+        self.learner = MetaLearner(left, right, epsilon, alpha=0.2, gamma=0.8)
+        left.printH()
+        right.printH()
+
+    def perform(self, verbose=0):
+        self.verbose = verbose
+        # active state
+        state_left = self.get_fov(self.fov)
+        # exploration state
+        state_right = self.get_fov(self.fov*3)
+        state_right = state_right[0] + state_right[1] # don't distinguish between items
+
+        self.learner.set_state(state_left, state_right) # sets all states
+        final_action = self.decide(self.learner) # selects recursively
+        self.learner.left_learner.update_actions(final_action)
+        self.learner.right_learner.update_actions(final_action)
+        if verbose == 3:
+            print 'mouse is facing {0} with state {1}'.format(self.game.direction, (state_left, state_right))
+            self.game.render()
+            c = raw_input('continue...')
+        self.game.play(final_action)
+        reward = self.check_reward()
+        if reward == 1:
+            value = self.cr
+        elif reward == -1:
+            value = -abs(self.tr)
+        else:
+            value = -abs(self.hr)
+        self.reward(value)
+        return reward
+
+    # deciding for top (main) learner
+    def decide(self, choice):
+        self.selections = []
+        learner = self.learner
+        decision = self._decide(learner)
+        return decision
+
+    def _decide(self, learner):
+        choice = learner.select()
+        if self.verbose == 3:
+            print ' -> {0}'.format(choice),
+        if choice in [self.learner.left_learner, self.learner.right_learner]:
+            return self._decide(choice) # meta choice
+        elif choice == 'now': # history choice
+            new_learner = learner.left_learner
+        elif choice == 'next':
+            new_learner = learner.history_learner
+        else: # final choice
+            return choice
+        self.selections.append(learner)
+        return self._decide(new_learner)
+
+    def reward(self, value):
+        self.learner.learn(value)

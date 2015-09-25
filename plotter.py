@@ -44,12 +44,27 @@ def bench_plot():
     output_file(wname, title=wname)
     p = figure(title=wname, x_axis_label='iteration', y_axis_label='score')
     p.extra_y_ranges = {'deaths': Range1d(start=0, end=10)}
-    for fn in args.name:
+    if len(args.name) == 1:
+        for fn in reversed(args.name):
+            color = 'blue'
+            if fn == name1: color = 'teal'
+            y = get_y_b(fn)
+            x = range(len(y[0]))
+            p.line(x, y[0], line_width=1, line_color=color)
+    color = []
+    color.append(['red', 'orange'])
+    color.append(['green', 'yellow'])
+    color.append(['blue', 'magenta'])
+    color.append(['orange', 'cyan'])
+    color.append(['yellow', 'red'])
+    color.append(['black', 'black'])
+    for i, fn in enumerate(args.name):
+        add = float(len(args.name) - i) * 0.1
         y = get_y_b(fn)
+        deaths = [ (0 if pp == 0 else pp+add) for pp in y[1] ]
         x = range(len(y[0]))
-        p.line(x, y[0], line_width=1)
-        p.line(x, y[1], line_width=1, line_color='red', y_range_name='deaths')
-        p.line(x, y[2], line_width=1, line_color='orange')
+        p.line(x, deaths, line_width=1, line_color=color[i][0], y_range_name='deaths')
+        p.line(x, y[2], line_width=1, line_color=color[i][1])
     p.y_range = Range1d(0, 1.1)
     save(p)
 

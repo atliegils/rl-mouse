@@ -109,7 +109,7 @@ def dist_to_cheese(game):
 
     return dist + add
 
-def test_HLearner(player, max_runs=5000):
+def benchmark(player, max_runs=5000):
     player.game.suppressed = True
     outfile = 'test.txt'
     if args.outfile:
@@ -151,7 +151,7 @@ def test_HLearner(player, max_runs=5000):
         for dp in data:
             f.write(','.join(map(str,list(dp))) + '\n')
 
-def benchmark(player, max_runs=5000):
+def old_benchmark(player, max_runs=5000):
     actions = ['left', 'forward', 'right']
     player.game.suppressed = True
     outfile = 'standard.txt'
@@ -355,7 +355,9 @@ def main():
         game.easy = True
     # configure player object
     if args.meta:
-        player = agent.HistoricalAgent(game, ['left', 'forward', 'right'], epsilon=args.epsilon, fov=args.fov, num_history_steps=0)
+#       player = agent.Agent(game, ['left', 'forward', 'right'], epsilon=args.epsilon, fov=args.fov)
+        player = agent.MetaAgent(game, ['left', 'forward', 'right'], levels=args.history_depth, epsilon=args.epsilon, fov=args.fov)
+#       player = agent.HistoricalAgent(game, ['left', 'forward', 'right'], levels=args.history_depth, epsilon=args.epsilon, fov=args.fov)
         player.adjust_rewards(abs(args.cheese_reward), abs(args.trap_reward), abs(args.hunger_reward))
     else:
         player = agent.Agent(game)
@@ -364,9 +366,7 @@ def main():
     t.daemon = True
     t.start()
     # launch point
-    if args.meta:
-        test_HLearner(player, max_runs=args.max_actions)
-    elif args.benchmark:
+    if args.meta or args.benchmark:
         benchmark(player, max_runs=args.max_actions)
     else:
         evaluate(player, max_runs=args.max_actions)
@@ -388,6 +388,7 @@ if __name__ == '__main__':
     parser.add_argument('--fov', type=int, default=3, help='how far the agent can see')
     parser.add_argument('-v', '--verbose', action='count', help='increase output verbosity')
     parser.add_argument('-b', '--benchmark', action='store_true', help='normalize data by counting steps')
+    parser.add_argument('-hd', '--history_depth', type=int, default=3, help='history depth')
     parser.add_argument('--meta', action='store_true', help='test history agent')
     parser.add_argument('--test', action='store_true', help='debug')
     args = parser.parse_args()

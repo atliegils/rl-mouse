@@ -109,6 +109,17 @@ class HistoryManager(BaseLearner):
         self.current_state  = state
         self.current_action = None
 
+    def update_actions(self, action):
+        self.left_learner.update_action(action)
+        try:
+            self.history_learner.update_actions(action)
+        except:
+            target = self.history_learner
+            if target:
+                target.update_action(action)
+            else:
+                print 'error'
+
     def learn(self, reward):
         qnext = self.getQ(self.current_state, self.current_action)
         if self.last_action:
@@ -120,3 +131,65 @@ class HistoryManager(BaseLearner):
             self.history_learner.learn(reward)
         else:
             raise Exception('Somehow neither learner was selected!')
+
+    def printH(self, indent=0):
+        def idd(indent, foo, a=''):
+            for i in xrange(indent):
+                print '|\t',
+            print '-> {0} {1}'.format(foo, a)
+        idd(indent, self, 'S')
+        idd(indent+1, self.left_learner, 'L')
+        if isinstance(self.history_learner, HistoryManager):
+            self.history_learner.printH(indent+1)
+        else:
+            idd(indent+1, self.history_learner, 'H')
+
+    def share_experience(self, reward):
+        if isinstance(self.left_learner, HistoryManager):
+            self.left_learner.share_experience(reward)
+        else:
+            self.left_learner.learn(reward)
+        if isinstance(self.history_learner, HistoryManager):
+            self.history_learner.share_experience(reward)
+        else:
+            self.history_learner.learn(reward)
+                
+
+class MetaLearner(BaseLearner):
+    
+    def __init__(self, left, right, epsilon=0.1, alpha=0.2, gamma=0.8):
+        self.q = {}
+        self.epsilon = epsilon
+        self.alpha   = alpha
+        self.gamma   = gamma
+        self.last_reward = 0
+        self.last_action = None
+        self.last_state  = None
+        self.current_action = None
+        self.current_state  = None
+        self.left_learner   = left
+        self.right_learner  = right
+        self.actions = [self.left_learner, self.right_learner]
+
+    def set_state(self, state_left, state_right):
+        self.left_learner.set_state(state_left)
+        self.right_learner.set_state(state_right)
+        self.last_state     = self.current_state
+        self.last_action    = self.current_action
+        self.current_state  = (state_left, state_right)
+        self.current_action = None
+
+    def learn(self, reward):
+        qnext = self.getQ(self.current_state, self.current_action)
+        if self.last_action:
+            self.learnQ(self.last_state, self.last_action, self.last_reward, qnext)
+        self.last_reward = reward
+        # now reward children
+        self.current_action.learn(reward)
+        other = self.left_learner
+        if self.current_action == self.left_learner:
+            other = self.right_learner
+        if isinstance(other, SARSA):
+            other.learn(reward)
+        else: # historical
+            other.share_experience(reward)
