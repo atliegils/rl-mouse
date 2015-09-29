@@ -124,7 +124,20 @@ def benchmark(player, max_runs=5000):
     last = [0]
     while len(data) < max_runs:
         i = i + 1
-        reward = player.perform(verbose=args.verbose)
+        if len(data) % (max_runs/10) == 0:
+            pass # here I would save the policy           
+        if i - start_step > args.round_limit: # our agent is probably in a loop
+            if args.verbose:
+                print 'timeout in game {0} at step {1}'.format(len(data) + 1, i)
+            average = sum(last) / float(len(last))
+            dp = (0, -1, average)
+            data.append(dp)
+            start_step = i
+            deaths = 0
+            player.reset_game()
+            dist = dist_to_cheese(player.game)
+        else:
+            reward = player.perform(verbose=args.verbose)
         if reward == 1:
             if data:
                 last = [x[0] for x in data[-100:]]
@@ -360,7 +373,7 @@ def main():
 #       player = agent.HistoricalAgent(game, ['left', 'forward', 'right'], levels=args.history_depth, epsilon=args.epsilon, fov=args.fov)
         player.adjust_rewards(abs(args.cheese_reward), abs(args.trap_reward), abs(args.hunger_reward))
     else:
-        player = agent.Agent(game)
+        player = agent.Agent(game, ['left', 'forward', 'right'])
     # boilerplate for CLI
     t = threading.Thread(target=command, args=(player,))
     t.daemon = True
@@ -378,11 +391,11 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--game_limit', action='store_true', help='max actions refers to games, not actions')
     parser.add_argument('-t', '--training_steps', type=int, default=10000, help='number of training steps')
     parser.add_argument('-d', '--difficulty', type=int, choices=[0, 1, 2], help='0: easy, 1: trap, 2: cat')
-    parser.add_argument('-cr', '--cheese_reward', type=int, default=100, help='reward for eating cheese')
-    parser.add_argument('-tr', '--trap_reward', type=int, default=-1000, help='reward for getting caught in a trap (should be negative)')
+    parser.add_argument('-cr', '--cheese_reward', type=int, default=5, help='reward for eating cheese')
+    parser.add_argument('-tr', '--trap_reward', type=int, default=-10, help='reward for getting caught in a trap (should be negative)')
     parser.add_argument('-hr', '--hunger_reward', type=int, default=-1, help='reward for not eating cheese or doing anything important')
     parser.add_argument('-g', '--grid_size', type=int, default=7, help='grid size')
-    parser.add_argument('-e', '--epsilon', type=float, default=0.05, help='custom epsilon value')
+    parser.add_argument('-e', '--epsilon', type=float, default=0.02, help='custom epsilon value')
     parser.add_argument('--data_interval', type=int, metavar='N', default=1, help='only write every Nth datapoint')
     parser.add_argument('--round_limit', type=int, metavar='N', default=0, help='limit rounds to N steps')
     parser.add_argument('--fov', type=int, default=3, help='how far the agent can see')

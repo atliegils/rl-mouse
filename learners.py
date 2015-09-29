@@ -77,11 +77,11 @@ class QLearn(BaseLearner):
 
 class SARSA(BaseLearner):
     def learn(self, reward):
-        if self.current_action and self.last_action and self.current_state and self.last_state:
+        if self.current_action and self.last_action and self.current_state != None and self.last_state != None:
             qnext = self.getQ(self.current_state, self.current_action)
             self.learnQ(self.last_state, self.last_action, self.last_reward, qnext)
         else:
-            print 'foo'
+            print 'foo: {0} {1} {2} {3} {4}'.format(self, self.last_state, self.current_state, self.last_action, self.current_action)
         self.last_reward = reward
 
 class HistoryManager(BaseLearner):

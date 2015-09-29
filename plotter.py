@@ -1,6 +1,7 @@
 #!/usr/bin/python2
 import argparse
 import operator
+import numpy as np
 from bokeh.plotting import figure, output_file, save
 from bokeh.models import LinearAxis, Range1d
 
@@ -43,14 +44,15 @@ def bench_plot():
     wname = name1[:name1.find('txt')] + 'html' 
     output_file(wname, title=wname)
     p = figure(title=wname, x_axis_label='iteration', y_axis_label='score')
-    p.extra_y_ranges = {'deaths': Range1d(start=0, end=10)}
+    p.extra_y_ranges = {'deaths': Range1d(start=-0.1, end=10)}
     if len(args.name) == 1:
         for fn in reversed(args.name):
             color = 'blue'
             if fn == name1: color = 'teal'
             y = get_y_b(fn)
             x = range(len(y[0]))
-            p.line(x, y[0], line_width=1, line_color=color)
+#           p.triangle(x, y[0], line_width=1, line_color=color)
+            p.circle(x, y[0], color=color)
     color = []
     color.append(['red', 'orange'])
     color.append(['green', 'yellow'])
@@ -63,8 +65,11 @@ def bench_plot():
         y = get_y_b(fn)
         deaths = [ (0 if pp == 0 else pp+add) for pp in y[1] ]
         x = range(len(y[0]))
+        zp = np.poly1d(np.polyfit(x, y[2], 1))
+        z = list([zp(aa) for aa in x])
         p.line(x, deaths, line_width=1, line_color=color[i][0], y_range_name='deaths')
         p.line(x, y[2], line_width=1, line_color=color[i][1])
+        p.line(x, z, line_width=2, line_color=color[i][0])
     p.y_range = Range1d(0, 1.1)
     save(p)
 
