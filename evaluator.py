@@ -130,7 +130,7 @@ def benchmark(player, max_runs=5000):
             if args.verbose:
                 print 'timeout in game {0} at step {1}'.format(len(data) + 1, i)
             average = sum(last) / float(len(last))
-            dp = (0, -1, average)
+            dp = (0, -1, average, player.accumulated)
             data.append(dp)
             start_step = i
             deaths = 0
@@ -143,7 +143,7 @@ def benchmark(player, max_runs=5000):
                 last = [x[0] for x in data[-100:]]
             average = sum(last) / float(len(last))
             score = dist / float(i - start_step)
-            dp = (score, deaths, average)
+            dp = (score, deaths, average, player.accumulated)
             data.append(dp)
             start_step = i
             deaths = 0

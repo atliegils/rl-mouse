@@ -3,6 +3,7 @@ import random
 class NotImplementedException(Exception):
     pass
 
+### Base learner class
 class BaseLearner:
     def __init__(self, actions, epsilon=0.1, alpha=0.2, gamma=0.8):
         self.q = {}
@@ -16,22 +17,26 @@ class BaseLearner:
         self.current_action = None
         self.current_state  = None
 
+    # sets the current state of the learner and updates the last state and action
     def set_state(self, state):
         self.last_state     = self.current_state
         self.last_action    = self.current_action
         self.current_state  = state
         self.current_action = None
 
+    # helper function for default (uninitialized) values
     def get_default_row(self):
         row = {}
         for act in self.actions:
             row[act] = 0.0
         return row
 
+    # Q-matrix accessor
     def getQ(self, state, action):
         row = self.q.get(state, self.get_default_row())
         return row.get(action, 0.0)
 
+    # internal method for updating the Q-matrix (dictionariy is this implementation)
     def learnQ(self, state, action, reward, maxqnew):
         if state == None:
             return # don't learn anything yet
@@ -41,6 +46,7 @@ class BaseLearner:
         row[action] = oldv + self.alpha * (value - oldv)
         self.q[state] = row
 
+    # Should be implemented in subclasses
     def learn(self, *args):
         raise NotImplementedException('BaseLearner::learn({0})'.format(args))
 
@@ -53,6 +59,7 @@ class BaseLearner:
     def update_action(self, action):
         self.current_action = action
 
+    # select an action based on the currnet state of thel earner
     def select(self):
         state = self.current_state
         if random.random < self.epsilon:
@@ -70,11 +77,13 @@ class BaseLearner:
         self.current_action = action
         return action
 
+# Q-learners always expect the best possible outcome -- good for offline agents
 class QLearn(BaseLearner):
     def learn(self, reward, next_state):
         maxqnew = max([self.getQ(next_state, a) for a in self.actions])
         self.learnQ(self.current_state, self.current_action, reward, maxqnew)
 
+# SARSA learners learn from 'experiences' -- good for online agents
 class SARSA(BaseLearner):
     def learn(self, reward):
         if self.current_action and self.last_action and self.current_state != None and self.last_state != None:
@@ -84,6 +93,7 @@ class SARSA(BaseLearner):
             print 'foo: {0} {1} {2} {3} {4}'.format(self, self.last_state, self.current_state, self.last_action, self.current_action)
         self.last_reward = reward
 
+# Learner that optionally selects its action based on a past state
 class HistoryManager(BaseLearner):
 
     def __init__(self, epsilon=0.1, alpha=0.2, gamma=0.8):
@@ -154,7 +164,7 @@ class HistoryManager(BaseLearner):
         else:
             self.history_learner.learn(reward)
                 
-
+# Meta learner that forms a tree structure of learners, rewarding an
 class MetaLearner(BaseLearner):
     
     def __init__(self, left, right, epsilon=0.1, alpha=0.2, gamma=0.8):
@@ -189,7 +199,7 @@ class MetaLearner(BaseLearner):
         other = self.left_learner
         if self.current_action == self.left_learner:
             other = self.right_learner
-        if isinstance(other, SARSA):
-            other.learn(reward)
-        else: # historical
+        if hasattr(other, 'share_experience'): # delegate reward, might not have used this learner
             other.share_experience(reward)
+        else: # SARSA or Q-Learner
+            other.learn(reward)

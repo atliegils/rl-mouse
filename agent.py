@@ -11,6 +11,7 @@ class Agent:
         self.cr = 5
         self.tr = 10
         self.hr = 1
+        self.accumulated = 0
         self.fov = fov
         self.main_learner = SARSA(actions, epsilon)
 
@@ -125,6 +126,7 @@ class Agent:
         return learner.select()
 
     def reward(self, value):
+        self.accumulated += value
         self.main_learner.learn(value)
      
     def perform(self, verbose=0):
@@ -139,9 +141,9 @@ class Agent:
         self.game.play(final_action)
         reward = self.check_reward()
         if reward == 1:
-            value = self.cr
+            value = self.cr * (self.game._cw + self.game._ch) / 2
         elif reward == -1:
-            value = -abs(self.tr)
+            value = -abs(self.tr) * (self.game._cw + self.game._ch) / 2
         else:
             value = -abs(self.hr)
         self.reward(value)
@@ -153,6 +155,7 @@ class HistoricalAgent(Agent):
         self.learners = []
         self.game = game
         self.score = 0
+        self.accumulated = 0
         self.fov = fov
         self.create_learners(levels, epsilon, actions)
         self.cr = 5
@@ -220,6 +223,7 @@ class HistoricalAgent(Agent):
         return self._decide(new_learner)
 
     def reward(self, value):
+        self.accumulated += value
         for s in self.selections:
             s.learn(value)
             if self.verbose == 3 and value != -2:
@@ -241,6 +245,7 @@ class MetaAgent(Agent):
     def __init__(self, game, actions, levels=2, epsilon=0.1, fov=3):
         self.game = game
         self.score = 0
+        self.accumulated = 0
         self.fov = fov
         self.create_learners(epsilon, actions, fov, levels)
 
@@ -287,9 +292,9 @@ class MetaAgent(Agent):
         self.game.play(final_action)
         reward = self.check_reward()
         if reward == 1:
-            value = self.cr
+            value = self.cr * (self.game._cw + self.game._ch) / 2
         elif reward == -1:
-            value = -abs(self.tr)
+            value = -abs(self.tr) * (self.game._cw + self.game._ch) / 2
         else:
             value = -abs(self.hr)
         self.reward(value)
@@ -318,4 +323,5 @@ class MetaAgent(Agent):
         return self._decide(new_learner)
 
     def reward(self, value):
+        self.accumulated += value
         self.learner.learn(value)
