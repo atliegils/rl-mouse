@@ -68,3 +68,5 @@ The `get_fov()` method calls `create_cone()`, which returns a 2-tuple (cheese, t
 
 The `perform()` method is the _meat_ of the agent. This is where the state is fetched (with `get_fov()`) and passed on to the learner. The learner is then activated by selecting an action from the learner and playing it in the game. Once the action has been performed, the agent should check if the game changed for better or worse. In the provided agent, this happens in the `check_reward()` method which returns whether or not the score increased, decreased, or neither as an integer between 1 and -1. The agent can then use that value to determine whether or not to administer a reward to the learner.
 
+The agent code must also handle the decision making at the meta level -- i.e. it must implement some logic to decide which learner makes the final decision (and the traversal down the tree to that learner).
+
