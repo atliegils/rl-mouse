@@ -30,7 +30,6 @@ class Renderer:
     _wh = 240
     
     def __init__(self, ww, wh, cc):
-#       pygame.init()
         self.display = pygame.display.set_mode((ww, wh))
         self.basic_font = pygame.font.Font('freesansbold.ttf', 18)
         pygame.display.set_caption('Mouse Game')

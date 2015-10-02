@@ -279,7 +279,8 @@ class MetaAgent(Agent):
         state_left = self.get_fov(self.fov)
         # exploration state
         state_right = self.get_fov(self.fov*3)
-        state_right = state_right[0] + state_right[1] # don't distinguish between items
+        if not self.game.easy: # if easy, then exploration is just better range...
+            state_right = state_right[0] + state_right[1] # don't distinguish between items
 
         self.learner.set_state(state_left, state_right) # sets all states
         final_action = self.decide(self.learner) # selects recursively

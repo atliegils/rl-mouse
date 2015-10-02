@@ -59,7 +59,7 @@ class BaseLearner:
     def update_action(self, action):
         self.current_action = action
 
-    # select an action based on the currnet state of thel earner
+    # select an action based on the currnet state of the learner
     def select(self):
         state = self.current_state
         if random.random < self.epsilon:
@@ -172,6 +172,7 @@ class MetaLearner(BaseLearner):
         self.epsilon = epsilon
         self.alpha   = alpha
         self.gamma   = gamma
+        self.side = ''
         self.last_reward = 0
         self.last_action = None
         self.last_state  = None
@@ -186,7 +187,12 @@ class MetaLearner(BaseLearner):
         self.right_learner.set_state(state_right)
         self.last_state     = self.current_state
         self.last_action    = self.current_action
-        self.current_state  = (state_left, state_right)
+        if 'left' in self.side:
+            self.current_state  = state_left
+        elif 'right' in self.side:
+            self.current_state  = state_right
+        else: 
+            self.current_state  = (state_left, state_right)
         self.current_action = None
 
     def learn(self, reward):

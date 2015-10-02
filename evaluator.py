@@ -372,6 +372,7 @@ def main():
         player = agent.MetaAgent(game, ['left', 'forward', 'right'], levels=args.history_depth, epsilon=args.epsilon, fov=args.fov)
 #       player = agent.HistoricalAgent(game, ['left', 'forward', 'right'], levels=args.history_depth, epsilon=args.epsilon, fov=args.fov)
         player.adjust_rewards(abs(args.cheese_reward), abs(args.trap_reward), abs(args.hunger_reward))
+        player.side = args.side
     else:
         player = agent.Agent(game, ['left', 'forward', 'right'])
     # boilerplate for CLI
@@ -402,6 +403,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', action='count', help='increase output verbosity')
     parser.add_argument('-b', '--benchmark', action='store_true', help='normalize data by counting steps')
     parser.add_argument('-hd', '--history_depth', type=int, default=3, help='history depth')
+    parser.add_argument('-s', '--side', default='', help='side for meta learner')
     parser.add_argument('--meta', action='store_true', help='test history agent')
     parser.add_argument('--test', action='store_true', help='debug')
     args = parser.parse_args()
