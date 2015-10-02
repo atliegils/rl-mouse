@@ -11,7 +11,7 @@ The learners are the building blocks of game-playing agents.
 
 ## HistoryManager
 `learners.py` provides a learner that has a memory, called `HistoryManager`.
-It is a learner that makes decisions based on information 'now' (at time step `t`) or 'the past' (time step `t-x` where history_levels >= `x` > 0.
+It is a learner that makes decisions based on information 'now' (at time step `t`) or 'the past' (time step `t-x` where `history_levels >= x > 0`.
 The history manager rewards the decider for selecting which sub-learner to use as well as the sub learners themselves.
 
 ## MetaLearner
