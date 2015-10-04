@@ -205,7 +205,7 @@ class MetaLearner(BaseLearner):
         other = self.left_learner
         if self.current_action == self.left_learner:
             other = self.right_learner
-        if hasattr(other, 'share_experience'): # delegate reward, might not have used this learner
+        if hasattr(other, 'share_experience'): # delegate reward, we didn't use this learner
             other.share_experience(reward)
         else: # SARSA or Q-Learner
             other.learn(reward)

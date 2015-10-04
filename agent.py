@@ -129,15 +129,16 @@ class Agent:
         self.accumulated += value
         self.main_learner.learn(value)
      
-    def perform(self, verbose=0):
+    def perform(self, explore=False, last_action=False, verbose=0):
         self.verbose = verbose
         state_now = self.get_fov(self.fov)
+        if explore:
+            explo = self.get_fov(self.fov*3)
+            state_now = state_now + (explo[0] + explo[1],)
+        if last_action:
+            state_now = state_now + (self.main_learner.current_action,)
         self.main_learner.set_state(state_now) # sets all states
-        final_action = self.decide(self.main_learner) # selects recursively
-        if verbose == 3:
-            print 'mouse is facing {0} with state {1}'.format(self.game.direction, state_now)
-            self.game.render()
-            c = raw_input('continue...')
+        final_action = self.decide(self.main_learner) 
         self.game.play(final_action)
         reward = self.check_reward()
         if reward == 1:
@@ -242,12 +243,17 @@ class HistoricalAgent(Agent):
                     print 'S{0} rewarded with {1}.'.format(s, value)
 
 class MetaAgent(Agent):
-    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=3):
+    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=3, history=False):
         self.game = game
         self.score = 0
         self.accumulated = 0
         self.fov = fov
-        self.create_learners(epsilon, actions, fov, levels)
+        if history:
+            self.create_learners(epsilon, actions, fov, levels)
+        else:
+            left  = SARSA(actions, epsilon)
+            right = SARSA(actions, epsilon)
+            self.learner = MetaLearner(left, right, epsilon, alpha=0.2, gamma=0.8)
 
     def create_learners(self, epsilon, actions, fov, levels):
         # build from bottom up

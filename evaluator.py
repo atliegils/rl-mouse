@@ -114,7 +114,7 @@ def benchmark(player, max_runs=5000):
     outfile = 'test.txt'
     if args.outfile:
         outfile = args.outfile
-    # no warning
+    # no overwrite warning here
 
     i = 0
     start_step = 0
@@ -122,6 +122,8 @@ def benchmark(player, max_runs=5000):
     dist = dist_to_cheese(player.game)
     data = []
     last = [0]
+    local_length = 10 * args.round_limit
+    accum = [0] * local_length
     while len(data) < max_runs:
         i = i + 1
         if len(data) % (max_runs/10) == 0:
@@ -130,20 +132,26 @@ def benchmark(player, max_runs=5000):
             if args.verbose:
                 print 'timeout in game {0} at step {1}'.format(len(data) + 1, i)
             average = sum(last) / float(len(last))
-            dp = (0, -1, average, player.accumulated)
+            local_reward = sum(accum[-local_length:])
+            dp = (0, -1, average, player.accumulated, local_reward)
             data.append(dp)
             start_step = i
             deaths = 0
             player.reset_game()
             dist = dist_to_cheese(player.game)
         else:
-            reward = player.perform(verbose=args.verbose)
+            eee = False
+            if args.test:
+                eee = True
+            reward = player.perform(explore=eee, last_action=True, verbose=args.verbose)
+            accum.append(reward)
         if reward == 1:
             if data:
                 last = [x[0] for x in data[-100:]]
             average = sum(last) / float(len(last))
             score = dist / float(i - start_step)
-            dp = (score, deaths, average, player.accumulated)
+            local_reward = sum(accum[-local_length:])
+            dp = (score, deaths, average, player.accumulated, local_reward)
             data.append(dp)
             start_step = i
             deaths = 0
@@ -158,8 +166,6 @@ def benchmark(player, max_runs=5000):
         if reward == -1:
             deaths += 1
             dist = dist_to_cheese(player.game) # the player was respawned
-#           if args.verbose == 3:
-#               args.verbose = 2
     with open(outfile, 'w') as f:
         for dp in data:
             f.write(','.join(map(str,list(dp))) + '\n')
@@ -369,12 +375,13 @@ def main():
     # configure player object
     if args.meta:
 #       player = agent.Agent(game, ['left', 'forward', 'right'], epsilon=args.epsilon, fov=args.fov)
-        player = agent.MetaAgent(game, ['left', 'forward', 'right'], levels=args.history_depth, epsilon=args.epsilon, fov=args.fov)
+        player = agent.MetaAgent(game, ['left', 'forward', 'right'], epsilon=args.epsilon, fov=args.fov)
 #       player = agent.HistoricalAgent(game, ['left', 'forward', 'right'], levels=args.history_depth, epsilon=args.epsilon, fov=args.fov)
         player.adjust_rewards(abs(args.cheese_reward), abs(args.trap_reward), abs(args.hunger_reward))
         player.side = args.side
     else:
         player = agent.Agent(game, ['left', 'forward', 'right'])
+    
     # boilerplate for CLI
     t = threading.Thread(target=command, args=(player,))
     t.daemon = True

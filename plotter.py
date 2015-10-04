@@ -29,25 +29,28 @@ def get_y_b(fn):
         deaths = []
         avgs = []
         accumul = []
+        accumu2 = []
         for line in f.readlines():
             elements = map(float, line.strip().split(','))
             steps.append(elements[0])
             deaths.append(elements[1])
             avgs.append(elements[2])
             accumul.append(elements[3])
+            accumu2.append(elements[4])
             
         data.append(steps)
         data.append(deaths)
         data.append(avgs)
         data.append(accumul)
+        data.append(accumu2)
     return data
 
-def get_range(name):
+def get_range(name, index=3):
     with open(name, 'r') as f:
         low = 0
         high = 0
         for line in f.readlines():
-            part = map(float, line.strip().split(','))[3]
+            part = map(float, line.strip().split(','))[index]
             if part > high:
                 high = part
             if part < low:
@@ -61,9 +64,11 @@ def bench_plot():
     wname = name1[:name1.find('txt')] + 'html' 
     output_file(wname, title=wname)
     p = figure(title=wname, x_axis_label='iteration', y_axis_label='score', plot_width=1000)
-    therange = get_range(name1)
-    p.extra_y_ranges = {'deaths': Range1d(start=-0.1, end=10), 'reward': Range1d(start=therange[0], end=therange[1])}
+    therange = get_range(name1, index=3)
+    therange2 = get_range(name1, index=4)
+    p.extra_y_ranges = {'deaths': Range1d(start=-0.1, end=10), 'reward': Range1d(start=therange[0], end=therange[1]), 'reward2': Range1d(start=therange2[0], end=therange2[1]*1.1)}
     p.add_layout(LinearAxis(y_range_name='reward'), 'right')
+    p.add_layout(LinearAxis(y_range_name='reward2'), 'left')
     if len(args.name) == 1:
         for fn in reversed(args.name):
             color = 'blue'
@@ -71,7 +76,7 @@ def bench_plot():
             y = get_y_b(fn)
             x = range(len(y[0]))
 #           p.triangle(x, y[0], line_width=1, line_color=color)
-            p.circle(x, y[0], color=color)
+            p.circle(x, y[0], color=color, alpha=0.5, size=0.5)
     color = []
     color.append(['red', 'orange', 'blue'])
     color.append(['green', 'yellow', 'red'])
@@ -87,6 +92,7 @@ def bench_plot():
         x = range(len(y[0]))
         zp = np.poly1d(np.polyfit(x, y[2], 1))
         z = list([zp(aa) for aa in x])
+        p.line(x, y[4], line_width=1, line_color=color[i][2], line_alpha=0.45, y_range_name='reward2')
         p.line(x, deaths, line_width=1, line_color=color[i][0], y_range_name='deaths')
         p.line(x, y[2], line_width=1, line_color=color[i][1])
         p.line(x, y[3], line_width=2, line_color=color[i][2], y_range_name='reward')
