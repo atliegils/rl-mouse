@@ -66,6 +66,18 @@
 	Every SARSA learner received the same reward each time a reward was administered. This ensures that learners that don't get picked often still have data to base decisions on.
 
 	\section{Results}
+	\label{sec:results}
+	In this section we refer to 'local reward' as a measure of how many times the learner was rewarded (+1) or disciplined (-1) in the last 10000 discrete time steps. The local reward is indicative of how well the agent has learned to solve the task -- how reliably it can attain positive rewards.
+
+	\subsection{Flat Learners}
+	\label{s:res:flat}
+	The flat learner without exploration information was notoriously bad at solving the tasks. In configuration 1 (2-7), the learner was able to maximize the local reward of 1006 in round 12462, however the best average measure of pathfinding occurred in round 2049. Increasing the grid size made the agent worse at solving the task, mostly due to being prone to timeouts. This indicates that without the exploration information, the learner doesn't learn how to explore at all. 
+	Adding exploration increased the performance significantly, although it took the agent longer to learn to avoid traps -- as expected with a larger state space. In configuration 1, the maximum local reward ocurred in round 27550 and was 1705. The best average was recorded in round 27524. For all configurations except configuration 5, the maximum local reward and average occurred nearing the end. In configuration 5, the best average ocurred in round 29348 but the best local reward was recorded in round 13139.
+	It is worthy to note that in all configurations except configuration 1, the learner without exploration information experienced quite a few timeouts (increasing with the grid size). The learner with exploration information only timed out 67 times in configuration 5, while the learner without it timed out between 1001-5228 times (depending on the configuration). However, the learner with exploration information took significantly longer to learn to avoid death, with the number of deaths increasing as the grid size was increased.
+
+	\subsection{Meta Learners}
+	\label{s:res:meta}
+
 
 	\section{Conclusion}
 
