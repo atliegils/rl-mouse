@@ -243,19 +243,28 @@ class HistoricalAgent(Agent):
                     print 'S{0} rewarded with {1}.'.format(s, value)
 
 class MetaAgent(Agent):
-    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=3, history=False):
+    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=3, learner_args=False):
         self.game = game
         self.score = 0
         self.accumulated = 0
         self.fov = fov
-        if history:
-            self.create_learners(epsilon, actions, fov, levels)
-        else:
+        if learner_args == 'history':
+            self.create_learners_history(epsilon, actions, fov, levels)
+        elif not learner_args:
             left  = SARSA(actions, epsilon)
             right = SARSA(actions, epsilon)
             self.learner = MetaLearner(left, right, epsilon, alpha=0.2, gamma=0.8)
+        else:
+            self.create_learners(epsilon, actions, fov, learner_args)
 
-    def create_learners(self, epsilon, actions, fov, levels):
+    def create_learners(self, epsilon, actions, fov, learner_args):
+        cheese = SARSA(actions, epsilon)
+        trap = SARSA(actions, epsilon)
+        left = MetaLearner(cheese, trap, epsilon, alpha=0.2, gamma=0.8)
+        right = SARSA(actions, epsilon)
+        self.learner = MetaLearner(left, right, epsilon, alpha=0.2, gamma=0.8)
+
+    def create_learners_history(self, epsilon, actions, fov, levels):
         # build from bottom up
         left = HistoryManager(epsilon)
         left.left_learner = SARSA(actions, epsilon)
@@ -279,12 +288,14 @@ class MetaAgent(Agent):
         left.printH()
         right.printH()
 
-    def perform(self, verbose=0):
+    def perform(self, last_action=False, verbose=0):
         self.verbose = verbose
         # active state
         state_left = self.get_fov(self.fov)
         # exploration state
         state_right = self.get_fov(self.fov*3)
+        if last_action:
+            state_right = (state_right, self.learner.right_learner.current_action)
         if not self.game.easy: # if easy, then exploration is just better range...
             state_right = state_right[0] + state_right[1] # don't distinguish between items
 

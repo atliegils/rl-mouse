@@ -76,6 +76,10 @@ class BaseLearner:
             action = self.actions[i]
         self.current_action = action
         return action
+     
+    def update_actions(self, action):
+        self.update_action(action)
+        
 
 # Q-learners always expect the best possible outcome -- good for offline agents
 class QLearn(BaseLearner):
@@ -183,8 +187,14 @@ class MetaLearner(BaseLearner):
         self.actions = [self.left_learner, self.right_learner]
 
     def set_state(self, state_left, state_right):
-        self.left_learner.set_state(state_left)
-        self.right_learner.set_state(state_right)
+        if isinstance(self.left_learner, MetaLearner):
+            self.left_learner.set_state(*state_left)
+        else:
+            self.left_learner.set_state(state_left)
+        if isinstance(self.right_learner, MetaLearner):
+            self.right_learner.set_state(*state_right)
+        else:
+            self.right_learner.set_state(state_right)
         self.last_state     = self.current_state
         self.last_action    = self.current_action
         if 'left' in self.side:
@@ -201,11 +211,17 @@ class MetaLearner(BaseLearner):
             self.learnQ(self.last_state, self.last_action, self.last_reward, qnext)
         self.last_reward = reward
         # now reward children
-        self.current_action.learn(reward)
+        if hasattr(self.current_action, 'learn'):
+            self.current_action.learn(reward)
         other = self.left_learner
         if self.current_action == self.left_learner:
             other = self.right_learner
         if hasattr(other, 'share_experience'): # delegate reward, we didn't use this learner
             other.share_experience(reward)
-        else: # SARSA or Q-Learner
+        elif hasattr(other, 'learn'): # SARSA or Q-Learner
             other.learn(reward)
+
+    def update_actions(self, action):
+        self.left_learner.update_actions(action)
+        self.right_learner.update_actions(action)
+

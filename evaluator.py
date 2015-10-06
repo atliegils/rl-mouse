@@ -140,10 +140,11 @@ def benchmark(player, max_runs=5000):
             player.reset_game()
             dist = dist_to_cheese(player.game)
         else:
-            eee = False
-            if args.test:
-                eee = True
-            reward = player.perform(explore=eee, last_action=True, verbose=args.verbose)
+#           eee = False
+#           if args.test:
+#               eee = True
+#           reward = player.perform(explore=eee, last_action=True, verbose=args.verbose)
+            reward = player.perform(verbose=args.verbose)
             accum.append(reward)
         if reward == 1:
             if data:
@@ -375,7 +376,7 @@ def main():
     # configure player object
     if args.meta:
 #       player = agent.Agent(game, ['left', 'forward', 'right'], epsilon=args.epsilon, fov=args.fov)
-        player = agent.MetaAgent(game, ['left', 'forward', 'right'], epsilon=args.epsilon, fov=args.fov)
+        player = agent.MetaAgent(game, ['left', 'forward', 'right'], epsilon=args.epsilon, fov=args.fov, learner_args=args.test)
 #       player = agent.HistoricalAgent(game, ['left', 'forward', 'right'], levels=args.history_depth, epsilon=args.epsilon, fov=args.fov)
         player.adjust_rewards(abs(args.cheese_reward), abs(args.trap_reward), abs(args.hunger_reward))
         player.side = args.side
