@@ -1,0 +1,82 @@
+\documentclass{article}
+
+\usepackage[toc,page]{appendix}
+\usepackage{float}					% floats
+\usepackage[T1]{fontenc}			% Icelandic chars
+\usepackage[margin=3cm]{geometry}	% margin
+\usepackage{graphicx}				% figures
+\usepackage[utf8]{inputenc}			% Icelandic chars
+\usepackage{listings} 				% display code
+\usepackage{natbib}					% references/bibliography
+\usepackage[section]{placeins}		% subsections
+
+\setlength{\parskip}{1em}
+
+\bibliographystyle{plainnat}
+
+\begin{document}
+
+% document-specific command declarations
+
+\title{Comparing Reinforcement Learner Architectures}
+\author{Þröstur Thorarensen (throstur11@ru.is)}
+\date{\today}
+\maketitle
+
+\begin{abstract}
+	TODO?
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+	\section{Introduction}
+	This report outlines a comparison between different reinforcement learner architectures. First, we examined the difference between two flat SARSA learners, where one has more information than the other. We then compared two hierarchical meta-learning architectures. Finally, we compared the flat learners with the meta learners. 
+
+%\section{Motivation}
+
+	\section{Method}
+	Each learner was compared by evaluating the performance in a game where an agent equipped with the learner must collect `cheese` while avoiding `traps`. Each data point consists of a single round, which ends once the agent collects a `cheese` or if it fails to do so after 1000 steps. The agent was evaluated in 5 different configurations of the task.
+	Each learner received the same information except for one learner, which did not receive exploration information, consisting of a ``field of view'' with information about nearby `cheese` and `traps` and a larger exploration field of view containing the same information but not distinguishing between cheese and traps.
+	Table \ref{tbl:task-config} shows the evaluted configurations. The field of view size is the base field of view, not the increased field of view in the exploration component.
+	
+	\begin{table}[h]
+		\centering
+		\begin{tabular}{l | r | l }
+			\# & grid size & field of view \\ 
+			\hline
+			1 & 2 & 7  \\
+			2 & 3 & 10 \\
+			3 & 3 & 11 \\
+			4 & 3 & 12 \\
+			5 & 3 & 15 \\
+		 \end{tabular}
+		 \caption{Task configurations}
+		 \label{tbl:task-config}
+	 \end{table}
+
+	\subsection{Flat Learners}
+	Two of the evaluated learners used flat architectures, where the learner received a tuple as the current state for each discrete time step. The learners themselves were identical, but the agent of one learner supplied it with the state $(cheese, trap, last\_action)$ whereas the other supplied it with $(cheese, trap, exploration, last\_action)$. 
+
+	\subsection{Hierarchical Learners}
+	The hierarchical learners used two distinct architectures. In both, the main meta learner was to learn whether or not to select from the left or right branch of the tree depending on the states each side was in. In one, both sides of the tree were individual flat SARSA learners whereas the other had a meta learner in place of the SARSA learner on the left side of the tree, in which the left meta learner had two SARSA learners responsible for only the cheese and trap information respectively.
+	The main meta learner's left side was responsible for the `cheese` and `trap` information while the right side was responsible for exploration. 
+
+	Every SARSA learner received the same reward each time a reward was administered. This ensures that learners that don't get picked often still have data to base decisions on.
+
+	\section{Results}
+
+	\section{Conclusion}
+
+
+\newpage
+\bibliography{references}
+
+\newpage
+\begin{appendices}
+
+
+\end{appendices}
+
+\end{document}
