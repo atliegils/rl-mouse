@@ -121,7 +121,7 @@ def main():
     save(p)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='snake q-learner evaluator')
+    parser = argparse.ArgumentParser(description='graph plotter')
     parser.add_argument('name', nargs='+', help='input file name')
     parser.add_argument('-a', '--yname', default='y-axis', help='y-axis name')
     parser.add_argument('-b', '--benchmark', action='store_true', help='plot benchmarking data')
