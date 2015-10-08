@@ -37,9 +37,10 @@
 %\section{Motivation}
 
 	\section{Method}
+	\label{sec:method}
 	Each learner was compared by evaluating the performance in a game where an agent equipped with the learner must collect `cheese` while avoiding `traps`. Each data point consists of a single round, which ends once the agent collects a `cheese` or if it fails to do so after 1000 steps. The agent was evaluated in 5 different configurations of the task.
-	Each learner received the same information except for one learner, which did not receive exploration information, consisting of a ``field of view'' with information about nearby `cheese` and `traps` and a larger exploration field of view containing the same information but not distinguishing between cheese and traps.
-	Table \ref{tbl:task-config} shows the evaluted configurations. The field of view size is the base field of view, not the increased field of view in the exploration component.
+	Each learner received the same information (except for one learner, which did not receive exploration information) consisting of a ``field of view'' with information about nearby `cheese` and `traps` and a larger exploration field of view containing the same information but not distinguishing between cheese and traps.
+	Table \ref{tbl:task-config} shows the evaluated configurations. The field of view size is the base field of view, not the increased field of view in the exploration component. The exploration component has a field of view three times as large as the base field of view.
 	
 	\begin{table}[h]
 		\centering
@@ -57,10 +58,13 @@
 	 \end{table}
 
 	\subsection{Flat Learners}
-	Two of the evaluated learners used flat architectures, where the learner received a tuple as the current state for each discrete time step. The learners themselves were identical, but the agent of one learner supplied it with the state $(cheese, trap, last\_action)$ whereas the other supplied it with $(cheese, trap, exploration, last\_action)$. 
+	\label{s:met:flat}
+	Two of the evaluated learners used flat architectures, where the learner received a tuple as the current state for each discrete time step. The learners themselves were identical, but the agent of one learner supplied it with the state $(cheese, trap, last\_action)$ whereas the other agent supplied its learner with $(cheese, trap, exploration, last\_action)$. 
 
 	\subsection{Hierarchical Learners}
+	\label{s:met:meta}
 	The hierarchical learners used two distinct architectures. In both, the main meta learner was to learn whether or not to select from the left or right branch of the tree depending on the states each side was in. In one, both sides of the tree were individual flat SARSA learners whereas the other had a meta learner in place of the SARSA learner on the left side of the tree, in which the left meta learner had two SARSA learners responsible for only the cheese and trap information respectively.
+	The prior learner is refered to as the 'single' hierarchical learner, whereas the one with an extra layer in the left branch is referred to as the 'double' hierarchical learner.
 	The main meta learner's left side was responsible for the `cheese` and `trap` information while the right side was responsible for exploration. 
 
 	Every SARSA learner received the same reward each time a reward was administered. This ensures that learners that don't get picked often still have data to base decisions on.
@@ -68,18 +72,39 @@
 	\section{Results}
 	\label{sec:results}
 	In this section we refer to 'local reward' as a measure of how many times the learner was rewarded (+1) or disciplined (-1) in the last 10000 discrete time steps. The local reward is indicative of how well the agent has learned to solve the task -- how reliably it can attain positive rewards.
+	Deaths refer to how often the agent walked into a trap and a timeout is when an agent performs 1000 steps without finding cheese (starvation).
 
 	\subsection{Flat Learners}
 	\label{s:res:flat}
-	The flat learner without exploration information was notoriously bad at solving the tasks. In configuration 1 (2-7), the learner was able to maximize the local reward of 1006 in round 12462, however the best average measure of pathfinding occurred in round 2049. Increasing the grid size made the agent worse at solving the task, mostly due to being prone to timeouts. This indicates that without the exploration information, the learner doesn't learn how to explore at all. 
-	Adding exploration increased the performance significantly, although it took the agent longer to learn to avoid traps -- as expected with a larger state space. In configuration 1, the maximum local reward ocurred in round 27550 and was 1705. The best average was recorded in round 27524. For all configurations except configuration 5, the maximum local reward and average occurred nearing the end. In configuration 5, the best average ocurred in round 29348 but the best local reward was recorded in round 13139.
+	The flat learner without exploration information was notoriously bad at solving the tasks. In configuration 1 (2-7), the learner was able to maximize the local reward at 1006 in round 12462, however the best average measure of pathfinding occurred in round 2049. Increasing the grid size made the agent worse at solving the task, mostly due to being prone to timeouts. This indicates that without the exploration information, the learner doesn't learn how to explore at all. 
+
+	Adding exploration increased the performance significantly, although it took the agent longer to learn to avoid traps -- as expected with a larger state space. In configuration 1, the maximum local reward ocurred in round 27550 and was 1705. The best average was recorded in round 27524. For all configurations except configuration 5, the maximum local reward and average occurred nearing the end. In configuration 5, the best average occurred in round 29348 but the best local reward was recorded in round 13139.
+
 	It is worthy to note that in all configurations except configuration 1, the learner without exploration information experienced quite a few timeouts (increasing with the grid size). The learner with exploration information only timed out 67 times in configuration 5, while the learner without it timed out between 1001-5228 times (depending on the configuration). However, the learner with exploration information took significantly longer to learn to avoid death, with the number of deaths increasing as the grid size was increased.
 
-	\subsection{Meta Learners}
+	\subsection{Hierarchical Learners}
 	\label{s:res:meta}
+	In configuration 1, the double learner performed similarly to the flat learner without exploration. Although it was able to maximize local reward to 1337 in one run and 1241 in another, the best achieved average in two runs was 0.659 whereas the flat learner without exploration achieved 0.674 and the one with exploration reached 0.801.
+	
+	In configuration 2, the single learner performed better than the flat learner with exploration. Maximizing the reward at 872 (only 46 higher than the flat learner) and reaching a best average 0.698 (0.695 in the second run). The single learner learned from fewer deaths than the flat learners, walking into 207 and 215 traps whereas the flat learner with exploration walked into 623 traps. 
+	In the same configuration, the double learner had a noticeably lower maximum average score than the single learner (0.584 and 0.524). In two different runs, the learner performed quite differently -- In one run, the learner was able to learn how to solve the task whereas in the other the learner was unable to learn how to explore and experienced 378 timeouts. In the second run, it did learn some useful information until at some point when it learned something that was less than helpful.
 
+	In configuration 3, the double learner showed vastly different results for two runs. In one run, the learner experienced 3219 timeouts and managed only to maximize local reward at 352 during a short period while the learner seemed to correct previously incorrect behavior. In the other run, the maximum local reward was recorded at 530 and only a single timeout occurred -- after 30000 runs, it seemed to be finally starting to improve. 
+	The single learner performed at a similar level as the flat learner. With best averages of 0.635 and 0.601 (compared to the flat learner's 0.626) and maximum local rewards of 669 and 586 (compared to the flat learner's 673). The flat learner walked into 580 traps but the single hierarchical learner only walked into 208 traps.
+
+	In configuration 4, the single learner was unable to learn the task reliably. The learner seems to initially learn how to solve the task, but time out frequently. The best achieved averages occurred in rounds 8014 and 10876 and the maximum local rewards in rounds 4190 and 4616.
+	The double learner was even worse, timing out 2945 and 5559 times with average rewards of 0.444 and 0.390 and achieving the best local rewards in rounds 247 and 360. This is comparable to the performance of the flat learner without exploration.
+
+	In configuration 5, the double learner was unable to learn the task. It had best averages at 0.399 and 0.297 and best local rewards of 59 and 42. The single learner had two very different runs. It was able to solve the task eventually in both runs -- quite early in one run, but quite late in the other. In one run, there were 9049 timeouts with a best average of 0.522 and maximum local reward of 219. In the other, there were 754 timeouts with a best average of 0.498 and maximum local reward of 230. Interestingly, the flat learner with exploration had a better performance than the meta learners, reaching a best average of 0.602 and maximum local reward of 377 while only timing out 67 times..
 
 	\section{Conclusion}
+
+	The experiments indicate that for the tasks described in this report, flat learners are capable of benefitting from additional useful information. The tradeoff is that it takes the learner significantly longer to learn since it must visit a combination of different looking states whereas another learner would recognize all those states as the same state. It's important that any additional information is useful, as otherwise the state space is polluted -- further delaying the learners from learning specific goals (such as avoiding traps).
+	
+	Comparing hierarchical learners with the flat learner, we found that the flat learner generally performed better than the hierarchical learners. Although the hierarchical learners seemed better at learning distinct objectives (get the cheese, avoid the trap), they were only able to match the performance of the flat learner for the simpler task configurations. As the grid size was increased, the hierarchical learners were not able to find suitable strategies for avoiding starvation (starvation is when the agent doesn't reach the cheese in 1000 steps).
+	A benefit of using hierarchical learners is that they are able to learn from fewer experiences\footnote{The hierarchical learners can learn from less information as they share experiences. Hierarchical learners that don't share experiences were not considered.}.
+
+	Interestingly, some of the hierarchical learners seemed to get worse as time progressed. This may indicate that rewards are being distributed incorrectly (causing incorrect prioritization), although it may also be an indicator for something else.
 
 
 \newpage
