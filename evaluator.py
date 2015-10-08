@@ -140,11 +140,13 @@ def benchmark(player, max_runs=5000):
             player.reset_game()
             dist = dist_to_cheese(player.game)
         else:
-#           eee = False
-#           if args.test:
-#               eee = True
-#           reward = player.perform(explore=eee, last_action=True, verbose=args.verbose)
-            reward = player.perform(verbose=args.verbose)
+            eee = False
+            if args.test:
+                eee = True
+            if args.meta:
+                reward = player.perform(verbose=args.verbose)
+            else:
+                reward = player.perform(explore=eee, last_action=True, verbose=args.verbose)
             accum.append(reward)
         if reward == 1:
             if data:
