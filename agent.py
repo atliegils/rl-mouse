@@ -132,7 +132,7 @@ class Agent:
         self.accumulated += value
         self.main_learner.learn(value)
      
-    def perform(self, explore=False, last_action=False, verbose=0):
+    def perform(self, explore=True, last_action=True, verbose=0):
         self.verbose = verbose
         state_now = self.get_fov(self.fov)
         if explore:
@@ -273,14 +273,14 @@ class MetaAgent(Agent):
 
     def set_epsilon(self, epsilon):
         def set_epsilon(learner, epsilon):
-            left = learner.left_learner
-            right = learner.right_learner
-            if left:
+            if hasattr(learner, 'left_learner'):
+                left = learner.left_learner
                 set_epsilon(left, epsilon)
-            if right:
+            if hasattr(learner, 'right_learner'):
+                right = learner.right_learner
                 set_epsilon(right, epsilon)
             learner.epsilon = epsilon
-        set_epsilon(self.main_learner, epsilon)
+        set_epsilon(self.learner, epsilon)
 
     def create_learners(self, epsilon, actions, fov, learner_args):
         cheese = SARSA(actions, epsilon)
@@ -325,7 +325,7 @@ class MetaAgent(Agent):
 
         self.learner.set_state(state_left, state_right) # sets all states
 
-    def perform(self, last_action=False, verbose=0):
+    def perform(self, explore=True, last_action=True, verbose=0):
         self.verbose = verbose
         self.set_states(last_action)
         final_action = self.decide(self.learner) # selects recursively

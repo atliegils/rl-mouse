@@ -1,6 +1,6 @@
 #!/bin/bash
 
-folder="compare_meta_flat"
+folder="compare_meta_flat2"
 
 mkdir $folder
 mkdir $folder/txt
@@ -8,7 +8,7 @@ mkdir $folder/html
 
 CMD="./evaluator.py -b"
 PLOT="./plotter.py -b"
-ARGS="-l -m 30000 --round_limit 1000 -cr 4 -tr 5 -hr 1 -b --test"
+ARGS="-l -m 30000 --round_limit 1000 -cr 2 -tr 5 -hr 1 -b --test"
 
 # ARGS: FOV, GRID SIZE
 run () {

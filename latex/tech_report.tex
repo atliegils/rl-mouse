@@ -63,8 +63,7 @@
 
 	\subsection{Hierarchical Learners}
 	\label{s:met:meta}
-	The hierarchical learners used two distinct architectures. In both, the main meta learner was to learn whether or not to select from the left or right branch of the tree depending on the states each side was in. In one, both sides of the tree were individual flat SARSA learners whereas the other had a meta learner in place of the SARSA learner on the left side of the tree, in which the left meta learner had two SARSA learners responsible for only the cheese and trap information respectively.
-	The prior learner is refered to as the 'single' hierarchical learner, whereas the one with an extra layer in the left branch is referred to as the 'double' hierarchical learner.
+	The hierarchical learners used two distinct architectures. The main meta learner was to learn whether or not to select from the left or right branch of the tree depending on the states each side was in. Both sides of the tree were individual flat SARSA learners.
 	The main meta learner's left side was responsible for the `cheese` and `trap` information while the right side was responsible for exploration. 
 
 	Every SARSA learner received the same reward each time a reward was administered. This ensures that learners that don't get picked often still have data to base decisions on.
@@ -84,7 +83,8 @@
 
 	\subsection{Hierarchical Learners}
 	\label{s:res:meta}
-	In configuration 1, the double learner performed similarly to the flat learner without exploration. Although it was able to maximize local reward to 1337 in one run and 1241 in another, the best achieved average in two runs was 0.659 whereas the flat learner without exploration achieved 0.674 and the one with exploration reached 0.801.
+	% TODO: REWRITE THIS WHOLE PART
+	In configuration 1, the double learner performed similarly to the flat learner without exploration, with fewer deaths. The maximum local reward was 992 in round 27475 and the best average was 0.691 in round 17645. 
 	
 	In configuration 2, the single learner performed better than the flat learner with exploration. Maximizing the reward at 872 (only 46 higher than the flat learner) and reaching a best average 0.698 (0.695 in the second run). The single learner learned from fewer deaths than the flat learners, walking into 207 and 215 traps whereas the flat learner with exploration walked into 623 traps. 
 	In the same configuration, the double learner had a noticeably lower maximum average score than the single learner (0.584 and 0.524). In two different runs, the learner performed quite differently -- In one run, the learner was able to learn how to solve the task whereas in the other the learner was unable to learn how to explore and experienced 378 timeouts. In the second run, it did learn some useful information until at some point when it learned something that was less than helpful.

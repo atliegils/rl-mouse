@@ -1,5 +1,34 @@
 import argparse
 
+def summarize_e(name):
+    print '========================'
+    print '{0} summary:'.format(name)
+
+    high_score = 0
+    deaths = 0
+    timeouts = 0
+    best_local = 0
+    with open(name, 'r') as f:
+        text = f.read()
+        for cur_step, line in enumerate(text.splitlines()):
+            parts = map(float, line.split(',')) # round eff, deaths, average, cumul, local
+            score = parts[0]
+            deaths = parts[1]
+            timeouts = parts[2]
+            accumulated_reward = parts[3]
+            local = parts[4]
+            if local > best_local:
+                best_local = max(local, best_local)
+                bl_round = cur_step
+            high_score = max(score, high_score)
+
+    print 'Accumulated reward: {0}'.format(accumulated_reward)
+    print 'Best local reward: {0} in round {1}'.format(best_local, bl_round)
+    print 'Total deaths: {0}'.format(deaths)
+    print 'Total timeouts: {0}'.format(timeouts)
+    print 'High Score: {0}'.format(high_score)
+    return (accumulated_reward, best_local, bl_round, deaths, timeouts, high_score)
+
 def summarize(name):
     print '========================'
     print '{0} summary:'.format(name)

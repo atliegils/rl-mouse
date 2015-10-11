@@ -173,17 +173,40 @@ def benchmark(player, max_runs=5000):
         for dp in data:
             f.write(','.join(map(str,list(dp))) + '\n')
 
-def evaluate(player, max_runs=5000):
+def evaluate(player, max_runs=5000, round_limit=300):
     # assumes a trained agent 
     player.game.suppressed = True
     outfile = 'evaluation.txt'
-    if args.outfile:
-        outfile = args.outfile
-        warn_overwrite(outfile)
-    evaluation_condition = True
-    while evaluation_condition:
-        pass
+    local_length = 10 * round_limit
+    current_step = 0
+    start_step   = 0
+    timeouts     = 0
+    deaths       = 0
+    data         = []
+    accumulated_reward = [0] * local_length
+    # evaluation loop
+    while current_step < max_runs:
+        current_step += 1
+        reward = player.perform()
+        if reward == -1:
+            deaths += 1
+        if reward:
+            start_step = current_step
+        else:
+            if current_step - start_step > round_limit:
+                player.reset_game()
+                start_step = current_step
+                timeouts += 1
+        accumulated_reward.append(reward)
+        # create data point
+        local_reward = sum(accumulated_reward[-local_length:])
+        data_point = (player.game.score, deaths, timeouts, player.accumulated, local_reward)
+        data.append(data_point)
 
+    # save results
+    with open(outfile, 'w') as f:
+        for datum in data:
+            f.write(','.join(map(str,list(datum))) + '\n')
     return outfile
 
     # interactive command line
