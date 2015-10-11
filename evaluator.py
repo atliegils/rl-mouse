@@ -144,7 +144,7 @@ def benchmark(player, max_runs=5000):
             if args.test:
                 eee = True
             if args.meta:
-                reward = player.perform(verbose=args.verbose)
+                reward = player.perform(last_action=True, verbose=args.verbose)
             else:
                 reward = player.perform(explore=eee, last_action=True, verbose=args.verbose)
             accum.append(reward)
@@ -173,178 +173,20 @@ def benchmark(player, max_runs=5000):
         for dp in data:
             f.write(','.join(map(str,list(dp))) + '\n')
 
-def old_benchmark(player, max_runs=5000):
-    actions = ['left', 'forward', 'right']
-    player.game.suppressed = True
-    outfile = 'standard.txt'
-    if args.outfile:
-        outfile = args.outfile
-    warn_overwrite(outfile)
-    # init learners
-    learner = SARSA(actions, args.epsilon)
-    g = args.grid_size
-    player.game.set_size(g, g)
-    # simulate
-    i = 0
-    start_step = 0
-    deaths = 0
-    dist = dist_to_cheese(player.game)
-    data = []
-    last = [0]
-    while len(data) < max_runs:
-        i = i + 1
-        state1 = player.get_fov(args.fov)
-        learner.set_state(state1)
-        action1 = learner.select()
-        if args.verbose == 3:
-            from pprint import pprint
-            player.game.render()
-            pprint(learner.q)
-            print state1
-            print 'min dist: {0}, choice: {1}\n'.format(dist, action1)
-            c = raw_input()
-            if c:
-                action1 = c
-                learner.current_action = action1
-            if 'q' in c:
-                args.verbose = 1
-            player.game.render()
-        player.game.play(action1)
-        reward = player.check_reward()
-        administer_reward(learner, reward)
-        if reward == 1: # count steps between cheeses
-            if data:
-                last = [x[0] for x in data[-100:]]
-            average = sum(last) / float(len(last))
-            score = dist / float(i - start_step)
-            dp = (score, deaths, average)
-            data.append(dp)
-            if args.verbose >= 2:
-                print dp
-            if args.verbose == 1 or args.verbose > 3:
-                print '{0}/{1}'.format(len(data), max_runs)
-            start_step = i
-            deaths = 0
-            player.reset_game()
-            dist = dist_to_cheese(player.game)
-        if reward == -1:
-            deaths += 1
-            dist = dist_to_cheese(player.game) # the player was respawned
-    with open(outfile, 'w') as f:
-        for dp in data:
-            f.write(','.join(map(str,list(dp))) + '\n')
-
 def evaluate(player, max_runs=5000):
-    actions = ['left', 'forward', 'right']
-    # game set up
+    # assumes a trained agent 
     player.game.suppressed = True
-    outfile = 'default.txt'
+    outfile = 'evaluation.txt'
     if args.outfile:
         outfile = args.outfile
-    warn_overwrite(outfile)
-    with open(outfile, 'w') as f:
-        # initialize the learners
-        learner = SARSA(actions, args.epsilon)
-        train(player, learner, args.training_steps)
-        # don't render evaluations (unless the user asks)
-        player.game.suppressed = True
-        learner.epsilon = args.epsilon  # other game 
-        g = args.grid_size              # setup based
-        player.game.set_size(g, g)      # on params
-        if args.verbose:
-            print 'training complete'
-        # round control
-        t_start = time.time()
-        time_limit = 5.0
-        start_step = 0
-        seconds_passed = 0.0
-        # bookkeeping ####
-        high_score = 0   #
-        last_scores = [] #
-        data = []        #
-        # end bookkeeping#
-        i = 0
-        step = 0
-        # main evaluation loop
-        while i < max_runs:
-            # record the time for a timeout
-            seconds_passed = time.time() - t_start
-            if seconds_passed > time_limit or step - start_step > args.round_limit and args.round_limit > 0:
-                player.reset_game()
-                t_start = time.time()   # reset round time
-                start_step = step       # reset round steps
-                if args.game_limit:     # write data since this is 'like death'
-                    i = i + 1
-                    high_score = max(score, high_score)
-                    datapoint = create_datapoint(score, high_score, last_scores)
-                    data.append(datapoint)
-                    if i % 100 == 0:
-                        for datum in data:
-                            f.write(str(datum) + '\n')
-                        if args.verbose:
-                            print 'average: {0}, timeout {1}, high {2}, {3}'.format(sum([int(x.split(',')[0]) for x in data]) / len(data), i, high_score, str(max(last_scores[-100:])))
-                        data = []
-                        last_scores = last_scores[-100:]
-            step = step + 1
-            # get an appropriate field of view based on grid size
-            state1 = player.get_fov(args.fov)
-            action1 = learner.select(state1)
-            player.game.play(action1)
-            reward = player.check_reward()
-            state2 = player.get_fov(args.fov)
-            administer_reward(learner, reward, state1, action1, state2)
-#           state = player.get_fov(max(3,3+g/2))
-#           learner.set_state(state)    # set leraner state
-#           selection = learner.select()# select an action
-#           player.game.play(selection) # play selected action
-#           # check if the action we chose was any good
-#           reward = player.check_reward()
-            score = player.game.score   # record score in case it gets changed now
-#           # reward control flow etc
-#           administer_reward(learner, reward)
-            if reward == 1:     # cheese
-                t_start = time.time() # reset the timeout, not in loop yet
-            elif reward == -1:  # trap
-                player.game.score = 0 # reset the score
-                # datapoint = right before death
-                if args.game_limit:   
-                    datapoint = create_datapoint(score, high_score, last_scores)
-                    data.append(datapoint)
-                    i = i + 1
-                    if i % 100 == 0:
-                        for datum in data:
-                            f.write(str(datum) + '\n')
-                        if args.verbose:
-                            print 'average: {0}, iteration {1}, high {2}, {3}'.format(sum([int(x.split(',')[0]) for x in data]) / len(data), i, high_score, str(max(last_scores[-100:])))
-                        data = []
-            # reward has been administered and data has been written IF we're writing on deaths
-            if args.verbose > 3:
-                print 'received reward {0} for action {1} in state {2}'.format(reward, action1, state1)
-            high_score = max(score, high_score)
-            if not args.game_limit: # datapoint = every action
-                i = i + 1
-                score = player.game.score
-                if i % args.data_interval == 0:
-                    datapoint = create_datapoint(score, high_score, last_scores, diff_local=True)
-                    data.append(datapoint)
-                if data and i % 100 == 0:
-                    for datum in data:
-                        f.write(str(datum) + '\n')
-                    if args.verbose:
-                        print 'average: {0}, action {1}, high {2}, {3}'.format(sum([int(x.split(',')[0]) for x in data]) / len(data), i, high_score, local_high)
-                    data = []
-            # data has been written if data_interval is 1 or if the modulo is zero
-            if args.verbose >= 3:
-                print '                                                             {0}\r'.format(i),
-            if args.verbose == 9: # verbose 9 is for debugging
-                raw_input('continue?')
-        # end of evaluations
-        for datum in data: # write any remaining data
-            f.write(str(datum) + '\n')
-        print 'all done'
-        sys.exit(0)
+        warn_overwrite(outfile)
+    evaluation_condition = True
+    while evaluation_condition:
+        pass
 
-# interactive command line
+    return outfile
+
+    # interactive command line
 def command(player):
     time.sleep(2) # give the main thread some time to prompt the user etc before taking over
     while True:
@@ -377,13 +219,14 @@ def main():
         game.easy = True
     # configure player object
     if args.meta:
-#       player = agent.Agent(game, ['left', 'forward', 'right'], epsilon=args.epsilon, fov=args.fov)
-        player = agent.MetaAgent(game, ['left', 'forward', 'right'], epsilon=args.epsilon, fov=args.fov, learner_args=args.test)
-#       player = agent.HistoricalAgent(game, ['left', 'forward', 'right'], levels=args.history_depth, epsilon=args.epsilon, fov=args.fov)
-        player.adjust_rewards(abs(args.cheese_reward), abs(args.trap_reward), abs(args.hunger_reward))
+        if args.test:
+            player = agent.CheeseMeta(game, ['left', 'forward', 'right'], epsilon=args.epsilon, fov=args.fov)
+        else:
+            player = agent.MetaAgent(game, ['left', 'forward', 'right'], epsilon=args.epsilon, fov=args.fov)
         player.side = args.side
     else:
         player = agent.Agent(game, ['left', 'forward', 'right'])
+    player.adjust_rewards(abs(args.cheese_reward), abs(args.trap_reward), abs(args.hunger_reward))
     
     # boilerplate for CLI
     t = threading.Thread(target=command, args=(player,))

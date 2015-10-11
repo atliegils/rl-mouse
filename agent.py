@@ -15,6 +15,9 @@ class Agent:
         self.fov = fov
         self.main_learner = SARSA(actions, epsilon)
 
+    def set_epsilon(self, epsilon):
+        self.main_learner.epsilon = epsilon
+
     def adjust_rewards(self, cr, tr, hr):
         self.cr = cr
         self.tr = tr
@@ -163,6 +166,17 @@ class HistoricalAgent(Agent):
         self.tr = 10
         self.hr = 1
 
+    def set_epsilon(self, epsilon):
+        def set_epsilon(learner, epsilon):
+            left = learner.left_learner
+            right = learner.history_learner
+            if left:
+                set_epsilon(left, epsilon)
+            if right:
+                set_epsilon(right, epsilon)
+            learner.epsilon = epsilon
+        set_epsilon(self.main_learner, epsilon)
+
     def create_learners(self, levels, epsilon, actions):
         bottom_level = HistoryManager(epsilon)
         bottom_level.history_learner = SARSA(actions, epsilon)
@@ -257,6 +271,17 @@ class MetaAgent(Agent):
         else:
             self.create_learners(epsilon, actions, fov, learner_args)
 
+    def set_epsilon(self, epsilon):
+        def set_epsilon(learner, epsilon):
+            left = learner.left_learner
+            right = learner.right_learner
+            if left:
+                set_epsilon(left, epsilon)
+            if right:
+                set_epsilon(right, epsilon)
+            learner.epsilon = epsilon
+        set_epsilon(self.main_learner, epsilon)
+
     def create_learners(self, epsilon, actions, fov, learner_args):
         cheese = SARSA(actions, epsilon)
         trap = SARSA(actions, epsilon)
@@ -288,18 +313,21 @@ class MetaAgent(Agent):
         left.printH()
         right.printH()
 
-    def perform(self, last_action=False, verbose=0):
-        self.verbose = verbose
+    def set_states(self, last_action=False):
         # active state
         state_left = self.get_fov(self.fov)
         # exploration state
         state_right = self.get_fov(self.fov*3)
-        if last_action:
-            state_right = (state_right, self.learner.right_learner.current_action)
         if not self.game.easy: # if easy, then exploration is just better range...
             state_right = state_right[0] + state_right[1] # don't distinguish between items
+        if last_action:
+            state_right = (state_right, self.learner.right_learner.current_action)
 
         self.learner.set_state(state_left, state_right) # sets all states
+
+    def perform(self, last_action=False, verbose=0):
+        self.verbose = verbose
+        self.set_states(last_action)
         final_action = self.decide(self.learner) # selects recursively
         self.learner.left_learner.update_actions(final_action)
         self.learner.right_learner.update_actions(final_action)
@@ -343,3 +371,28 @@ class MetaAgent(Agent):
     def reward(self, value):
         self.accumulated += value
         self.learner.learn(value)
+
+# Like MetaAgent, but set the state of the top level agent to 1/0 depending on if it can see cheese
+class CheeseMeta(MetaAgent):
+    def set_states(self, last_action=False):
+        # active state
+        state_left = self.get_fov(self.fov)
+        # exploration state
+        state_right = self.get_fov(self.fov*3)
+        if not self.game.easy: # if easy, then exploration is just better range...
+            state_right = state_right[0] + state_right[1] # don't distinguish between items
+        if last_action:
+            state_right = (state_right, self.learner.right_learner.current_action)
+        self.learner.set_state(state_left, state_right)
+        self.learner.current_state = 0
+        if state_left[0] or state_left[1]:
+            self.learner.current_state = 1
+
+    def decide(self, choice):
+        self.selections = []
+        if self.learner.current_state == 0:
+            decision = self._decide(self.learner.right_learner)
+        else:
+            decision = self._decide(self.learner.left_learner)
+        return decision
+
