@@ -205,21 +205,24 @@ class MetaLearner(BaseLearner):
             self.current_state  = (state_left, state_right)
         self.current_action = None
 
-    def learn(self, reward):
+    def learn(self, reward, next_states=None):
+        # reward self
         qnext = self.getQ(self.current_state, self.current_action)
         if self.last_action:
             self.learnQ(self.last_state, self.last_action, self.last_reward, qnext)
         self.last_reward = reward
-        # now reward children
-        if hasattr(self.current_action, 'learn'):
-            self.current_action.learn(reward)
-        other = self.left_learner
-        if self.current_action == self.left_learner:
-            other = self.right_learner
-        if hasattr(other, 'share_experience'): # delegate reward, we didn't use this learner
-            other.share_experience(reward)
-        elif hasattr(other, 'learn'): # SARSA or Q-Learner
-            other.learn(reward)
+        # now teach children
+        def apply_learn(learner, reward, used=False, next_state=None):
+            """Apply learning to sub-learners"""     # avoid code duplication
+            if hasattr(learner, 'share_experience'): # delegate reward
+                learner.share_experience(reward)
+            elif isinstance(learner, QLearn):
+                assert next_state, 'No next state supplied for Q-Learner'
+                learner.learn(reward, next_state)
+            else:
+                learner.learn(reward)
+        apply_learn(self.left_learner, reward, used=(self.left_learner==self.current_action), next_state=next_states[0])
+        apply_learn(self.right_learner, reward, used=(self.right_learner==self.current_action), next_state=next_states[1])
 
     def update_actions(self, action):
         self.left_learner.update_actions(action)

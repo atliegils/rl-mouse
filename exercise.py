@@ -1,5 +1,6 @@
 import argparse
 import traceback
+import learners
 import agent
 import evaluator
 import summarizer
@@ -8,24 +9,30 @@ from game import Game
 def train(agent):
     """This method should be implemented by the student"""
     print agent
+    agent.set_epsilon(0.1)
+    for i in xrange(3):
+        agent.perform()
 
 # temporary method, maybe, we'll see
 def get_agent(game):
-    player = agent.MetaAgent(game, ['left', 'forward', 'right'], epsilon=0.1, fov=3)
+    actions = ['left', 'forward', 'right']
+    player = agent.MetaAgent(game, actions, epsilon=0.1, fov=3, learner_class=learners.QLearn)
+#   player = agent.Agent(game, actions, epsilon=0.1, fov=3)
     return player
 
 def main():
     global args # this line does nothing, args is already in the global namespace
     # game and agent setup code
-    g_actions = ['left', 'forward', 'right']
     game = Game()
     game.set_size(args.grid_size, args.grid_size)
     agent = get_agent(game)
     agent.adjust_rewards(2,3,1)
+    agent.game.suppressed = True
     # train the agent
     train(agent)
-    # turn off exploration
-    agent.set_epsilon(0.0)
+    # clean up after training
+    agent.accumulated = 0  # reset accumulated rewards
+    agent.set_epsilon(0.0) # turn off exploration
     # evaluate the training results
     file_name = evaluator.evaluate(agent)
     # print out a nice summary of how the evaluation went

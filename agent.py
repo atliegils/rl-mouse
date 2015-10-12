@@ -1,11 +1,11 @@
 import math, random
 import time, traceback
 from game import Game
-from learners import HistoryManager, SARSA, MetaLearner
+from learners import HistoryManager, SARSA, MetaLearner, QLearn
 
 # CAT, CHEESE AND TRAP AGENT
 class Agent:
-    def __init__(self, game, actions, epsilon=0.1, fov=3):
+    def __init__(self, game, actions, epsilon=0.1, fov=3, learner_class=SARSA):
         self.game = game
         self.score = 0
         self.cr = 5
@@ -13,7 +13,7 @@ class Agent:
         self.hr = 1
         self.accumulated = 0
         self.fov = fov
-        self.main_learner = SARSA(actions, epsilon)
+        self.main_learner = learner_class(actions, epsilon)
 
     def set_epsilon(self, epsilon):
         self.main_learner.epsilon = epsilon
@@ -150,13 +150,17 @@ class Agent:
             value = -abs(self.tr) * (self.game._cw + self.game._ch) / 2
         else:
             value = -abs(self.hr)
-        self.reward(value)
+        if isinstance(self.main_learner, QLearn): # provide next state for Q-Learners
+            self.reward(value, self.get_fov(self.fov))
+        else: 
+            self.reward(value)
         return reward
 
 # Agent that tracks history
 class HistoricalAgent(Agent):
-    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=3):
+    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=3, learner_class=SARSA):
         self.learners = []
+        self.learner_class = learner_class
         self.game = game
         self.score = 0
         self.accumulated = 0
@@ -179,13 +183,13 @@ class HistoricalAgent(Agent):
 
     def create_learners(self, levels, epsilon, actions):
         bottom_level = HistoryManager(epsilon)
-        bottom_level.history_learner = SARSA(actions, epsilon)
-        bottom_level.left_learner = SARSA(actions, epsilon)
+        bottom_level.history_learner = self.learner_class(actions, epsilon)
+        bottom_level.left_learner = self.learner_class(actions, epsilon)
         top = bottom_level
         for i in range(levels-1):
             top.q = {}
             next_level = HistoryManager(epsilon)
-            next_level.left_learner = SARSA(actions, epsilon)
+            next_level.left_learner = self.learner_class(actions, epsilon)
             next_level.history_learner = top
             top = next_level
         self.main_learner = top
@@ -257,19 +261,14 @@ class HistoricalAgent(Agent):
                     print 'S{0} rewarded with {1}.'.format(s, value)
 
 class MetaAgent(Agent):
-    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=3, learner_args=False):
+    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=3, learner_class=SARSA):
         self.game = game
         self.score = 0
         self.accumulated = 0
         self.fov = fov
-        if learner_args == 'history':
-            self.create_learners_history(epsilon, actions, fov, levels)
-        elif not learner_args:
-            left  = SARSA(actions, epsilon)
-            right = SARSA(actions, epsilon)
-            self.learner = MetaLearner(left, right, epsilon, alpha=0.2, gamma=0.8)
-        else:
-            self.create_learners(epsilon, actions, fov, learner_args)
+        left  = learner_class(actions, epsilon)
+        right = learner_class(actions, epsilon)
+        self.learner = MetaLearner(left, right, epsilon, alpha=0.2, gamma=0.8)
 
     def set_epsilon(self, epsilon):
         def set_epsilon(learner, epsilon):
@@ -281,37 +280,6 @@ class MetaAgent(Agent):
                 set_epsilon(right, epsilon)
             learner.epsilon = epsilon
         set_epsilon(self.learner, epsilon)
-
-    def create_learners(self, epsilon, actions, fov, learner_args):
-        cheese = SARSA(actions, epsilon)
-        trap = SARSA(actions, epsilon)
-        left = MetaLearner(cheese, trap, epsilon, alpha=0.2, gamma=0.8)
-        right = SARSA(actions, epsilon)
-        self.learner = MetaLearner(left, right, epsilon, alpha=0.2, gamma=0.8)
-
-    def create_learners_history(self, epsilon, actions, fov, levels):
-        # build from bottom up
-        left = HistoryManager(epsilon)
-        left.left_learner = SARSA(actions, epsilon)
-        left.history_learner = SARSA(actions, epsilon)
-        right = HistoryManager(epsilon)
-        right.left_learner = SARSA(actions, epsilon)
-        right.history_learner = SARSA(actions, epsilon)
-        for i in range(levels-1):
-            left.q = {}
-            right.q = {}
-            next_level = HistoryManager(epsilon)
-            next_level.left_learner = SARSA(actions, epsilon)
-            next_level.history_learner = left
-            left = next_level
-            next_level = HistoryManager(epsilon)
-            next_level.left_learner = SARSA(actions, epsilon)
-            next_level.history_learner = right
-            right = next_level
-        # left and right now point to top nodes
-        self.learner = MetaLearner(left, right, epsilon, alpha=0.2, gamma=0.8)
-        left.printH()
-        right.printH()
 
     def set_states(self, last_action=False):
         # active state
@@ -343,6 +311,7 @@ class MetaAgent(Agent):
             value = -abs(self.tr) * (self.game._cw + self.game._ch) / 2
         else:
             value = -abs(self.hr)
+        self.next_states = (self.get_fov(self.fov), self.get_fov(self.fov*3))
         self.reward(value)
         return reward
 
@@ -370,7 +339,7 @@ class MetaAgent(Agent):
 
     def reward(self, value):
         self.accumulated += value
-        self.learner.learn(value)
+        self.learner.learn(value, self.next_states)
 
 # Like MetaAgent, but set the state of the top level agent to 1/0 depending on if it can see cheese
 class CheeseMeta(MetaAgent):
