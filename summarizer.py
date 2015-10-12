@@ -8,6 +8,7 @@ def summarize_e(name):
     deaths = 0
     timeouts = 0
     best_local = 0
+    extra_steps = 0
     with open(name, 'r') as f:
         text = f.read()
         for cur_step, line in enumerate(text.splitlines()):
@@ -17,6 +18,7 @@ def summarize_e(name):
             timeouts = parts[2]
             accumulated_reward = parts[3]
             local = parts[4]
+            extra_steps += parts[6]
             if local > best_local:
                 best_local = max(local, best_local)
                 bl_round = cur_step
@@ -27,7 +29,8 @@ def summarize_e(name):
     print 'Total deaths: {0}'.format(deaths)
     print 'Total timeouts: {0}'.format(timeouts)
     print 'High Score: {0}'.format(high_score)
-    magic = (best_local * 2 - deaths * 3) * (high_score + accumulated_reward / high_score) * 0.001 + (high_score * 0.001)
+    print 'Total extra steps: {0}'.format(extra_steps)
+    magic = (best_local * 2 - deaths * 3) * (high_score + accumulated_reward / high_score) * 0.001 + (high_score * 0.001) - extra_steps * 0.001
     print 'Evaluation score: {0}'.format(magic)
     return (accumulated_reward, best_local, bl_round, deaths, timeouts, high_score)
 
