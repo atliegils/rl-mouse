@@ -2,8 +2,22 @@
 import argparse
 import operator
 import numpy as np
-from bokeh.plotting import figure, output_file, save
+from bokeh.plotting import figure, output_file, save, show
 from bokeh.models import LinearAxis, Range1d
+
+def get_data(fn):
+    def insert(cols, index, item):
+        try:
+            cols[index].append(item)
+        except IndexError:
+            cols.append([item])
+    with open(fn, 'r') as f:
+        cols = []
+        for line in f.readlines():
+            elements = map(float, line.strip().split(','))
+            for eno, epart in enumerate(elements):
+                insert(cols, eno, epart)
+    return cols
 
 def get_y(fn):
     data = []
@@ -55,9 +69,43 @@ def get_range(name, index=3):
                 high = part
             if part < low:
                 low = part
-
     return low, high
 
+def evaluation_plot(fn):
+    base_fn = fn[:fn.find('.txt')]
+    output_file(base_fn + '.html', title=base_fn)
+    y = get_data(fn)
+    x = range(len(y[0]))
+    p = figure(title=base_fn, x_axis_label='evaluation', y_axis_label='score', plot_width=1000)
+    p.circle(x, y[6], color='teal', alpha=0.5, size=3)      # extra steps
+#   p.circle(x, y[0], color='teal', alpha=0.5, size=0.5)    # score
+    p.circle(x, y[5], color='red', alpha=0.5, size=0.5)     # deaths/round
+    p.circle(x, y[2], color='black', alpha=0.5, size=0.5)   # timeouts (total)
+#   p.circle(x, y[3], color='blue', alpha=0.5, size=0.5)    # accumul. reward
+    p.circle(x, y[4], color='orange', alpha=0.9, size=0.5)  # local reward
+
+    show(p)
+
+def compare_evals(fn1, fn2):
+    assert fn1, 'fn1 is a {0}'.format(type(fn1))
+    assert fn2, 'fn2 is a {0}'.format(type(fn2))
+    base_fn = fn1[:fn1.find('.txt')], fn2[:fn2.find('.txt')]
+    title=base_fn[0] + ' vs ' + base_fn[1]
+    output_file(base_fn[0]+'vs'+base_fn[1]+'.html', title=title)
+    y1 = get_data(fn1)
+    y2 = get_data(fn2)
+    x = range(len(y1[0]))
+    colors = ['teal', 'orange']
+    p = figure(title=title, x_axis_label='evaluation', y_axis_label='score', plot_width=1000)
+    p.circle(x, y1[6], color=colors[0], alpha=0.5, size=3)
+    p.circle(x, y2[6], color=colors[1], alpha=0.5, size=3)
+    p.triangle(x, y1[5], color=colors[0], alpha=0.3, size=2)
+    p.triangle(x, y2[5], color=colors[1], alpha=0.3, size=2)
+    p.inverted_triangle(x, y1[2], color=colors[0], alpha=0.3, size=2)
+    p.inverted_triangle(x, y2[2], color=colors[1], alpha=0.3, size=2)
+    p.line(x, y1[4], color=colors[0], alpha=0.5, size=0.5)
+    p.line(x, y2[4], color=colors[1], alpha=0.5, size=0.5)
+    show(p)
 
 def bench_plot():
     name1 = args.name[0]
