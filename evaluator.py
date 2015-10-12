@@ -72,6 +72,9 @@ def train(player, learner, max_runs=10000):
     player.reset_game()
 
 def dist_to_cheese(game):
+    assert game._cw == game._ch, 'not a square grid'
+    gz = game._cw
+    max_len = (gz + 1) / 2 # looped grid
     mouse = game.mouse
     cheese = game.cheese
     dx = mouse[0] - cheese[0]
@@ -79,12 +82,11 @@ def dist_to_cheese(game):
     direct = abs(dx) + abs(dy)
     # mouse could go through walls, consider extra options
     distances = [direct] 
-    shift = args.grid_size / 2
-    def align(x):
-        return (x + args.grid_size) % args.grid_size
     xs = []
     ys = []
-    for i in xrange(args.grid_size):
+    def align(x):
+        return (x + gz) % gz
+    for i in xrange(gz):
         dx = align(i + mouse[0]) - align(i + cheese[0])
         dy = align(i + mouse[1]) - align(i + cheese[1])
         xs.append(abs(dx))
@@ -97,7 +99,7 @@ def dist_to_cheese(game):
     add = 0
     # add 2 to the distance IFF direction is opposite
 #   if ddx == 0 or ddy == 0:
-    if dx == 0 or dy == 0 and args.grid_size > 3:
+    if dx == 0 or dy == 0 and gz > 3:
         if game.direction == 'up' and mouse[1] + 1 == cheese[1]:
             add = 2
         elif game.direction == 'down' and mouse[1] - 1 == cheese[1]:
@@ -107,7 +109,7 @@ def dist_to_cheese(game):
         elif game.direction == 'right' and mouse[0] - 1 == cheese[0]:
             add = 2
 
-    return dist + add
+    return min(dist + add, max_len)
 
 def benchmark(player, max_runs=5000):
     player.game.suppressed = True
@@ -197,11 +199,10 @@ def generate_configurations():
                         col.append(config)
     return col
 
-
-def evaluate(player, max_runs=5000, round_limit=300):
+def evaluate(player, max_runs=5000, round_limit=300, name='evaluation'):
     # assumes a trained agent 
     player.game.suppressed = True
-    outfile = 'evaluation.txt'
+    outfile = name + '.txt'
     local_length = 10 * round_limit
     current_step = 0
     start_step   = 0
@@ -211,10 +212,11 @@ def evaluate(player, max_runs=5000, round_limit=300):
     accumulated_reward = [0] * local_length
     evaluation_configurations = generate_configurations()
     # evaluation loop
-    import time
     for configuration in evaluation_configurations:
         current_step = 0
+        local_deaths = 0
         configure_game(player, *configuration)
+        target_distance = dist_to_cheese(player.game)
         player.game.render()
 #       print 'Configuration {0}'.format(configuration)
         while current_step < round_limit:
@@ -223,6 +225,7 @@ def evaluate(player, max_runs=5000, round_limit=300):
             accumulated_reward.append(reward)
             if reward == -1:
                 deaths += 1
+                local_deaths += 1
             if reward:
                 start_step = current_step
                 break
@@ -233,7 +236,8 @@ def evaluate(player, max_runs=5000, round_limit=300):
                 break # breaks out of while loop ('failed' configuration)
         # create data point
         local_reward = sum(accumulated_reward[-local_length:])
-        data_point = (player.game.score, deaths, timeouts, player.accumulated, local_reward)
+        extra_steps = current_step - target_distance + target_distance * local_deaths
+        data_point = (player.game.score, deaths, timeouts, player.accumulated, local_reward, local_deaths, extra_steps)
         data.append(data_point)
 
     # save results
