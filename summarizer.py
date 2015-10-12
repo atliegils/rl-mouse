@@ -27,6 +27,8 @@ def summarize_e(name):
     print 'Total deaths: {0}'.format(deaths)
     print 'Total timeouts: {0}'.format(timeouts)
     print 'High Score: {0}'.format(high_score)
+    magic = (best_local * 2 - deaths * 3) * (high_score + accumulated_reward / high_score) * 0.001 + (high_score * 0.001)
+    print 'Evaluation score: {0}'.format(magic)
     return (accumulated_reward, best_local, bl_round, deaths, timeouts, high_score)
 
 def summarize(name):
@@ -68,7 +70,7 @@ def make_plot(bav, bar, blv, blr, dts, tos):
 def main():
     global args
     for fn in args.names:
-        data = summarize(fn)
+        data = summarize_e(fn)
         if args.plot:
             make_plot(*data)
 

@@ -11,10 +11,11 @@ def main():
     # game and agent setup code
     game = Game()
     game.set_size(args.grid_size, args.grid_size)
+    # fetch the agent from the provided solution
     agent = exercise.get_agent(game)
     agent.adjust_rewards(2,3,1)
     agent.game.suppressed = True
-    # train the agent
+    # train the agent using the provided solution
     exercise.train(agent)
     # clean up after training
     agent.accumulated = 0  # reset accumulated rewards
@@ -36,7 +37,7 @@ if __name__ == '__main__':
     except SystemExit:
         exit(1)
     except KeyboardInterrupt:
-        print 'CTRL + C detected, canceling...'
+        print '\rCTRL + C detected, canceling...'
         exit(2)
     except Exception, e:
         print '\nERROR'

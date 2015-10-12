@@ -173,7 +173,76 @@ def benchmark(player, max_runs=5000):
         for dp in data:
             f.write(','.join(map(str,list(dp))) + '\n')
 
+def configure_game(player, d_cheese, d_trap, start_dir):
+    assert d_cheese != d_trap, 'cheese and trap in same location'
+    c_dx, c_dy = d_cheese
+    t_dx, t_dy = d_trap
+    player.game.direction = start_dir
+    player.game.mouse = 3, 3
+    player.game.cheese = player.offset(c_dx, c_dy)
+    player.game.trap = player.offset(t_dx, t_dy)
+    
+def generate_configurations():
+    col = []
+    dirs = ['up', 'right']#, 'down', 'left']
+    for dd in dirs:
+        for offset in xrange(-3, 4, 1):
+            for off2 in xrange(-2, 3, 1):
+                for c in xrange(5):
+                    for t in xrange(5):
+                        if t == c: continue
+                        dc = c, c + offset 
+                        dt = t, t + off2
+                        config = dc, dt, dd
+                        col.append(config)
+    return col
+
+
 def evaluate(player, max_runs=5000, round_limit=300):
+    # assumes a trained agent 
+    player.game.suppressed = True
+    outfile = 'evaluation.txt'
+    local_length = 10 * round_limit
+    current_step = 0
+    start_step   = 0
+    timeouts     = 0
+    deaths       = 0
+    data         = []
+    accumulated_reward = [0] * local_length
+    evaluation_configurations = generate_configurations()
+    # evaluation loop
+    import time
+    for configuration in evaluation_configurations:
+        current_step = 0
+        configure_game(player, *configuration)
+        player.game.render()
+#       print 'Configuration {0}'.format(configuration)
+        while current_step < round_limit:
+            current_step += 1
+            reward = player.perform()
+            accumulated_reward.append(reward)
+            if reward == -1:
+                deaths += 1
+            if reward:
+                start_step = current_step
+                break
+            elif current_step - start_step > round_limit:
+                player.reset_game()
+                start_step = current_step
+                timeouts += 1
+                break # breaks out of while loop ('failed' configuration)
+        # create data point
+        local_reward = sum(accumulated_reward[-local_length:])
+        data_point = (player.game.score, deaths, timeouts, player.accumulated, local_reward)
+        data.append(data_point)
+
+    # save results
+    with open(outfile, 'w') as f:
+        for datum in data:
+            f.write(','.join(map(str,list(datum))) + '\n')
+    return outfile
+
+def evaluate_old(player, max_runs=5000, round_limit=300):
     # assumes a trained agent 
     player.game.suppressed = True
     outfile = 'evaluation.txt'
