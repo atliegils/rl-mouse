@@ -1,5 +1,4 @@
 import pygame
-#rom pygame.locals import *
 
 # setup code, constants
 WIN_WIDTH = 640
@@ -9,7 +8,6 @@ assert WIN_WIDTH  % CELL_SIZE == 0, "Window width must be a multiple of cell siz
 assert WIN_HEIGHT % CELL_SIZE == 0, "Window height must be a multiple of cell size."
 CELL_WIDTH  = int(WIN_WIDTH  / CELL_SIZE)
 CELL_HEIGHT = int(WIN_HEIGHT / CELL_SIZE)
-# color constants
 # COLOR       R    G    B
 WHITE     = (255, 255, 255)
 BLACK     = (  0,   0,   0)
