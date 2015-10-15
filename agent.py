@@ -8,20 +8,22 @@ class Agent:
     def __init__(self, game, actions, epsilon=0.1, fov=3, learner_class=SARSA):
         self.game = game
         self.score = 0
-        self.cr = 5
-        self.tr = 10
-        self.hr = 1
+        self.adjust_rewards( 1,  1,  0 )
+        self.reward_scaling([1, -1, -1])
         self.accumulated = 0
         self.fov = fov
-        self.main_learner = learner_class(actions, epsilon)
+        self.learner = learner_class(actions, epsilon)
 
     def set_epsilon(self, epsilon):
-        self.main_learner.epsilon = epsilon
+        self.learner.epsilon = epsilon
 
     def adjust_rewards(self, cr, tr, hr):
         self.cr = cr
         self.tr = tr
         self.hr = hr
+
+    def reward_scaling(self, arr):
+        self.scaling = arr
 
     def item_at(self, coord):
         if self.game.cheese == coord:
@@ -130,8 +132,8 @@ class Agent:
 
     def reward(self, value):
         self.accumulated += value
-        self.main_learner.learn(value)
-     
+        self.learner.learn(value)
+
     def perform(self, explore=True, last_action=True, verbose=0):
         self.verbose = verbose
         state_now = self.get_fov(self.fov)
@@ -139,22 +141,43 @@ class Agent:
             explo = self.get_fov(self.fov*3)
             state_now = state_now + (explo[0] + explo[1],)
         if last_action:
-            state_now = state_now + (self.main_learner.current_action,)
-        self.main_learner.set_state(state_now) # sets all states
-        final_action = self.decide(self.main_learner) 
+            state_now = state_now + (self.learner.current_action,)
+        self.learner.set_state(self.modify_state(state_now)) # sets all states
+        final_action = self.decide(self.learner) 
         self.game.play(final_action)
         reward = self.check_reward()
-        if reward == 1:
-            value = self.cr * (self.game._cw + self.game._ch) / 2
-        elif reward == -1:
-            value = -abs(self.tr) * (self.game._cw + self.game._ch) / 2
-        else:
-            value = -abs(self.hr)
-        if isinstance(self.main_learner, QLearn): # provide next state for Q-Learners
+        value = self.calc_reward(reward)
+        # end refactor
+        if isinstance(self.learner, QLearn): # provide next state for Q-Learners
             self.reward(value, self.get_fov(self.fov))
         else: 
             self.reward(value)
         return reward
+
+    def calc_reward(self, reward):
+        scaling_factor = (self.game._cw + self.game._ch) / 2
+        if reward == 1:
+            value = self.scaling[0] * abs(self.cr) * scaling_factor
+        elif reward == -1:
+            value = self.scaling[1] * abs(self.tr) * scaling_factor
+        else:
+            value = self.scaling[2] * abs(self.hr)
+        return value
+
+    # This __ONLY__ exists for monkey patching perform more easily
+    def modify_state(self, state):
+        return state
+
+# just wraps a learner in an agent so that it can perform
+class WrapperAgent(Agent):
+    def __init__(self, learner, game, fov):
+        self.game = game
+        self.score = 0
+        self.adjust_rewards( 1,  1,  0 )
+        self.reward_scaling([1, -1, -1])
+        self.accumulated = 0
+        self.fov = fov
+        self.learner = learner
 
 # Agent that tracks history
 class HistoricalAgent(Agent):
@@ -273,11 +296,9 @@ class MetaAgent(Agent):
     def set_epsilon(self, epsilon):
         def set_epsilon(learner, epsilon):
             if hasattr(learner, 'left_learner'):
-                left = learner.left_learner
-                set_epsilon(left, epsilon)
+                set_epsilon(learner.left_learner, epsilon)
             if hasattr(learner, 'right_learner'):
-                right = learner.right_learner
-                set_epsilon(right, epsilon)
+                set_epsilon(learner.right_learner, epsilon)
             learner.epsilon = epsilon
         set_epsilon(self.learner, epsilon)
 
@@ -305,12 +326,7 @@ class MetaAgent(Agent):
             c = raw_input('continue...')
         self.game.play(final_action)
         reward = self.check_reward()
-        if reward == 1:
-            value = self.cr * (self.game._cw + self.game._ch) / 2
-        elif reward == -1:
-            value = -abs(self.tr) * (self.game._cw + self.game._ch) / 2
-        else:
-            value = -abs(self.hr)
+        value = self.calc_reward(reward)
         self.next_states = (self.get_fov(self.fov), self.get_fov(self.fov*3))
         self.reward(value)
         return reward
