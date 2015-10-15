@@ -1,9 +1,7 @@
 #!/usr/bin/python2
 import argparse
-import agent
 import copy
 import evaluator
-import learners
 import summarizer
 import traceback
 from game import Game
@@ -36,6 +34,9 @@ def evaluate(name):
     agent.game.high_score = 0
     agent.fov = args.fov
     agent.game = original_game # if the training modifies the game, it is fixed here
+    exercise.reward_profile(agent)
+    if args.dephase:
+        agent.reward_scaling([-1, 1, -1])
     # evaluate the training results
     file_name = evaluator.evaluate(agent, name='eval_'+name) 
     # print out a nice summary of how the evaluation went
@@ -50,8 +51,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='RL Learner exercise')
     parser.add_argument('solution_name', default='exercise', nargs='?', help='exercise to evaluate')
     parser.add_argument('-c', '--compare_to', help='compare two solutions')
-    parser.add_argument('-g', '--grid_size', type=int, default=7, help='grid size')
+    parser.add_argument('-g', '--grid_size', type=int, default=10, help='grid size')
     parser.add_argument('-f', '--fov', type=int, default=3, help='base field of view')
+    parser.add_argument('--dephase', action='store_true', help=u'swap reward scalars (180\N{DEGREE SIGN} out of phase)')
     parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
     try:

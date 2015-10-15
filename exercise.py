@@ -21,3 +21,11 @@ def train(player):
     for i in xrange(3000):   # train it for 3000 steps
         player.perform()     # do an action at every step
 
+# control over rewards for (finding cheese, entering a trap, walking)
+# by default the rewards are scaled by [1, -1, -1]
+def reward_profile(player):
+    """The reward profile can be adjusted by changing the line below
+    Hint: Flat learners sometimes require a little extra push --
+    by punishing the learner every step it learns not to walk in circles"""
+    player.adjust_reward(2,3,1)
+
