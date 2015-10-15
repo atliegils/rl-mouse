@@ -132,7 +132,10 @@ class Agent:
 
     def reward(self, value):
         self.accumulated += value
-        self.learner.learn(value)
+        if isinstance(self.learner, QLearn): # provide next state for Q-Learners
+            self.learner.learn(value, self.modify_state(self.get_fov(self.fov)))
+        else:
+            self.learner.learn(value)
 
     def perform(self, explore=True, last_action=True, verbose=0):
         self.verbose = verbose
@@ -147,11 +150,7 @@ class Agent:
         self.game.play(final_action)
         reward = self.check_reward()
         value = self.calc_reward(reward)
-        # end refactor
-        if isinstance(self.learner, QLearn): # provide next state for Q-Learners
-            self.reward(value, self.get_fov(self.fov))
-        else: 
-            self.reward(value)
+        self.reward(value)
         return reward
 
     def calc_reward(self, reward):
@@ -178,6 +177,22 @@ class WrapperAgent(Agent):
         self.accumulated = 0
         self.fov = fov
         self.learner = learner
+
+    def perform(self, explore=False, last_action=False, verbose=0):
+        self.verbose = verbose
+        state_now = self.get_fov(self.fov)
+        if explore:
+            explo = self.get_fov(self.fov*3)
+            state_now = state_now + (explo[0] + explo[1],)
+        if last_action:
+            state_now = state_now + (self.learner.current_action,)
+        self.learner.set_state(self.modify_state(state_now)) # sets all states
+        final_action = self.decide(self.learner) 
+        self.game.play(final_action)
+        reward = self.check_reward()
+        value = self.calc_reward(reward)
+        self.reward(value)
+        return reward
 
 # Agent that tracks history
 class HistoricalAgent(Agent):
