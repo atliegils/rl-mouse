@@ -1,4 +1,6 @@
 import argparse
+def avg(arr):
+    return sum(arr)/len(arr)
 
 def summarize_e(name):
     print '========================'
@@ -9,6 +11,7 @@ def summarize_e(name):
     timeouts = 0
     best_local = 0
     extra_steps = 0
+    ratios = []
     with open(name, 'r') as f:
         text = f.read()
         for cur_step, line in enumerate(text.splitlines()):
@@ -19,19 +22,27 @@ def summarize_e(name):
             accumulated_reward = parts[3]
             local = parts[4]
             extra_steps += parts[6]
+            ratios.append(parts[7])
             if local > best_local:
                 best_local = max(local, best_local)
                 bl_round = cur_step
             high_score = max(score, high_score)
 
+    average_ratio = avg(ratios)
     print 'Accumulated reward: {0}'.format(accumulated_reward)
     print 'Best local reward: {0} in round {1}'.format(best_local, bl_round)
     print 'Total deaths: {0}'.format(deaths)
     print 'Total timeouts: {0}'.format(timeouts)
     print 'High Score: {0}'.format(high_score)
     print 'Total extra steps: {0}'.format(extra_steps)
-    magic = (best_local * 2 - deaths * 3) * (high_score + accumulated_reward / high_score) * 0.001 + (high_score * 0.001) - extra_steps * 0.001
+    print 'Average performance: {0}'.format(average_ratio)
+    magic = ((best_local * 2 - deaths * 3) * (high_score + accumulated_reward / high_score) * 0.001 + (high_score * 0.001) - extra_steps * 0.001 - timeouts) * average_ratio
     print 'Evaluation score: {0}'.format(magic)
+    print '\t',
+    if magic < 100 or timeouts > 100 or accumulated_reward < 0 or average_ratio < 0.3:
+        print 'FAIL'
+    else:
+        print 'PASS'
     return (accumulated_reward, best_local, bl_round, deaths, timeouts, high_score)
 
 def summarize(name):

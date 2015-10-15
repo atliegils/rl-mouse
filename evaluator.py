@@ -205,11 +205,10 @@ def evaluate(player, max_runs=5000, round_limit=300, name='evaluation'):
     outfile = name + '.txt'
     local_length = 10 * round_limit
     current_step = 0
-    start_step   = 0
     timeouts     = 0
     deaths       = 0
     data         = []
-    accumulated_reward = [0] * local_length
+    accumulated_reward = [] 
     evaluation_configurations = generate_configurations()
     # evaluation loop
     for configuration in evaluation_configurations:
@@ -227,17 +226,15 @@ def evaluate(player, max_runs=5000, round_limit=300, name='evaluation'):
                 deaths += 1
                 local_deaths += 1
             if reward:
-                start_step = current_step
                 break
-            elif current_step - start_step > round_limit:
-                player.reset_game()
-                start_step = current_step
-                timeouts += 1
-                break # breaks out of while loop ('failed' configuration)
+        else:
+            player.reset_game()
+            timeouts += 1
         # create data point
         local_reward = sum(accumulated_reward[-local_length:])
+        ratio = target_distance / current_step
         extra_steps = current_step - target_distance + target_distance * local_deaths
-        data_point = (player.game.score, deaths, timeouts, player.accumulated, local_reward, local_deaths, extra_steps)
+        data_point = (player.game.score, deaths, timeouts, player.accumulated, local_reward, local_deaths, extra_steps, ratio)
         data.append(data_point)
 
     # save results
