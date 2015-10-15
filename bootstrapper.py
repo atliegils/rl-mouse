@@ -21,11 +21,11 @@ def evaluate(name):
     original_game = copy.copy(game)
     # fetch the agent from the provided solution
     agent = exercise.get_agent(game)
-    agent.adjust_rewards( 2,  3,  1 )
     agent.reward_scaling([1, -1, -1])
     agent.fov = args.fov
     agent.game.suppressed = True
     # train the agent using the provided solution
+    exercise.reward_profile(agent)
     exercise.train(agent)
     # clean up after training
     agent.accumulated = 0   # reset accumulated rewards
