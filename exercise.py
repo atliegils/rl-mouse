@@ -27,5 +27,5 @@ def reward_profile(player):
     """The reward profile can be adjusted by changing the line below
     Hint: Flat learners sometimes require a little extra push --
     by punishing the learner every step it learns not to walk in circles"""
-    player.adjust_reward(2,3,1)
+    player.adjust_rewards(2,3,1)
 
