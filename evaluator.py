@@ -200,6 +200,10 @@ def generate_configurations():
     return col
 
 def evaluate(player, max_runs=5000, round_limit=300, name='evaluation'):
+    target_limit = player.game._cw * player.game._ch / 2
+    if target_limit > round_limit:
+        round_limit = target_limit
+        print 'setting round limit to {0}'.format(round_limit)
     # assumes a trained agent 
     player.game.suppressed = True
     outfile = name + '.txt'
@@ -225,7 +229,7 @@ def evaluate(player, max_runs=5000, round_limit=300, name='evaluation'):
             if reward == -1:
                 deaths += 1
                 local_deaths += 1
-            if reward:
+            if reward == 1:
                 break
         else:
             player.reset_game()
