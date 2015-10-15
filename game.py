@@ -1,5 +1,3 @@
-import pygame
-import render
 import random
 import time
 
@@ -19,11 +17,17 @@ class Game:
     high_score = 0
 
     # default cell size
-    def __init__(self):
+    def __init__(self, do_render=True):
         self._cc = 20
         self._cw = 32
         self._ch = 24
-        pygame.init()
+        self.do_render = do_render
+        if self.do_render:  #   BIG RED NOTICE HERE
+            global pygame   # -----------------------
+            global render   # Only import into global
+            import pygame   #    namespace if the
+            import render   #   render flag is set!
+            pygame.init()
         self.score = 0
         self.trap   = (0, 0)
         self.mouse  = (0, 0)
@@ -33,10 +37,12 @@ class Game:
         self.move_chance = 0.07
         self.easy = False
         self.reset()
-        self.r = render.Renderer(self._cw * self._cc, self._ch * self._cc, self._cc)
+        if self.do_render:
+            self.r = render.Renderer(self._cw * self._cc, self._ch * self._cc, self._cc)
 
     def __del__(self):
-        pygame.quit()
+        if self.do_render:
+            pygame.quit()
 
     def reset(self):
         self.direction = RIGHT
@@ -51,14 +57,16 @@ class Game:
         self._cw = cw
         self._ch = ch
         self.reset()
-        del self.r
-        self.r = render.Renderer(self._cw * self._cc, self._ch * self._cc, self._cc)
+        if self.do_render:
+            del self.r
+            self.r = render.Renderer(self._cw * self._cc, self._ch * self._cc, self._cc)
 
     def get_size(self):
         return self._cw, self._ch, self._cc
 
     def render(self):
-        self.r.render((self.cheese, self.trap, self.mouse), self.score)
+        if self.do_render:
+            self.r.render((self.cheese, self.trap, self.mouse), self.score)
 
     def play(self, action):
         # move the trap if it's a cat
