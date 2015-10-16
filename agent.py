@@ -25,6 +25,16 @@ class Agent:
     def reward_scaling(self, arr):
         self.scaling = arr
 
+    def is_hunger(self, value):
+        scaling_factor = (self.game._cw + self.game._ch) / 2
+        if scaling_factor * self.cr * self.scaling[0] == value \
+        or scaling_factor * self.tr * self.scaling[1] == value:
+            return False
+        if self.hr * self.scaling[2] == value:
+            return True
+        print 'wow what happened in is_hunger? value was ', value
+        return False
+
     def item_at(self, coord):
         if self.game.cheese == coord:
             return 'cheese'
@@ -131,7 +141,8 @@ class Agent:
         return learner.select()
 
     def reward(self, value):
-        self.accumulated += value
+        if not self.is_hunger(value):
+            self.accumulated += value
         if isinstance(self.learner, QLearn): # provide next state for Q-Learners
             self.learner.learn(value, self.modify_state(self.get_fov(self.fov)))
         else:
@@ -280,7 +291,8 @@ class HistoricalAgent(Agent):
         return self._decide(new_learner)
 
     def reward(self, value):
-        self.accumulated += value
+        if not self.is_hunger(value):
+            self.accumulated += value
         for s in self.selections:
             s.learn(value)
             if self.verbose == 3 and value != -2:
@@ -369,7 +381,8 @@ class MetaAgent(Agent):
         return self._decide(new_learner)
 
     def reward(self, value):
-        self.accumulated += value
+        if not self.is_hunger(value):
+            self.accumulated += value
         self.learner.learn(value, self.next_states)
 
 # Like MetaAgent, but set the state of the top level agent to 1/0 depending on if it can see cheese
