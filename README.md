@@ -2,7 +2,8 @@
 
 ## Exercises
 
-Currently there is only the default exercise. # TODO
+Currently there is only `exercise.py` which serves as a template for solutions.
+_In progress: exercises where specific learners are better than others_
  
 ## Students (crafting a solution)
 
@@ -43,7 +44,7 @@ The learners are the building blocks of game-playing agents.
 `learners.py` provides a learner that has a memory, called `HistoryManager`.
 It is a learner that makes decisions based on information 'now' (at time step `t`) or 'the past' (time step `t-x` where `history_levels >= x > 0`.
 The history manager rewards the decider for selecting which sub-learner to use as well as the sub learners themselves.
-_Note: The HistoryManager has not been maintained actively for a long time and might not work properly, use at your own risk!__
+_Note: The HistoryManager has not been maintained actively for a long time and might not work properly, use at your own risk!_
 
 ## MetaLearner
 The meta learner learns from two different sublearners of any kind. The meta learner learns to select the sublearner that yields the highest reward and trains all sublearners simultaneously (this doesn't apply to `HistoryManagers`, since their learning is based on decisions and not the game itself).
