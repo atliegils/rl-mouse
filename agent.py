@@ -13,6 +13,7 @@ class Agent:
         self.accumulated = 0
         self.fov = fov
         self.learner = learner_class(actions, epsilon)
+        self.learning = True
 
     def set_epsilon(self, epsilon):
         self.learner.epsilon = epsilon
@@ -141,6 +142,7 @@ class Agent:
         return learner.select()
 
     def reward(self, value):
+        if not self.learning: return
         if not self.is_hunger(value):
             self.accumulated += value
         if isinstance(self.learner, QLearn): # provide next state for Q-Learners
@@ -218,6 +220,7 @@ class HistoricalAgent(Agent):
         self.cr = 5
         self.tr = 10
         self.hr = 1
+        self.learning = True
 
     def set_epsilon(self, epsilon):
         def set_epsilon(learner, epsilon):
@@ -291,6 +294,7 @@ class HistoricalAgent(Agent):
         return self._decide(new_learner)
 
     def reward(self, value):
+        if not self.learning: return
         if not self.is_hunger(value):
             self.accumulated += value
         for s in self.selections:
@@ -319,6 +323,7 @@ class MetaAgent(Agent):
         left  = learner_class(actions, epsilon)
         right = learner_class(actions, epsilon)
         self.learner = MetaLearner(left, right, epsilon, alpha=0.2, gamma=0.8)
+        self.learning = True
 
     def set_epsilon(self, epsilon):
         def set_epsilon(learner, epsilon):
@@ -381,6 +386,7 @@ class MetaAgent(Agent):
         return self._decide(new_learner)
 
     def reward(self, value):
+        if not self.learning: return
         if not self.is_hunger(value):
             self.accumulated += value
         self.learner.learn(value, self.next_states)

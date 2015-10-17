@@ -206,6 +206,7 @@ def evaluate(player, max_runs=5000, round_limit=300, name='evaluation'):
         print 'setting round limit to {0}'.format(round_limit)
     # assumes a trained agent 
     player.game.suppressed = True
+    player.learning = False # disable learning (freeze the policy)
     outfile = name + '.txt'
     local_length = 10 * round_limit
     current_step = 0
