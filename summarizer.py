@@ -10,6 +10,7 @@ def summarize_e(name):
     deaths = 0
     timeouts = 0
     best_local = 0
+    bl_round = -1
     extra_steps = 0
     ratios = []
     with open(name, 'r') as f:
