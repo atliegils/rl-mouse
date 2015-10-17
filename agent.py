@@ -14,6 +14,7 @@ class Agent:
         self.fov = fov
         self.learner = learner_class(actions, epsilon)
         self.learning = True
+        self.dephased = False
 
     def set_epsilon(self, epsilon):
         self.learner.epsilon = epsilon
@@ -120,6 +121,8 @@ class Agent:
         cheese = int(bstr.replace('-1','0')[::-1], 2)
         traps = int(bstr.replace('-1', '2').replace('1', '0').replace('2', '1')[::-1], 2)
 #       print '{0} produced {1}'.format(bstr, cheese)
+        if self.dephased:
+            return traps, cheese
         return cheese, traps
 
     def check_reward(self): 
@@ -190,6 +193,7 @@ class WrapperAgent(Agent):
         self.accumulated = 0
         self.fov = fov
         self.learner = learner
+        self.dephased = False
 
     def perform(self, explore=False, last_action=False, verbose=0):
         self.verbose = verbose
@@ -221,6 +225,7 @@ class HistoricalAgent(Agent):
         self.tr = 10
         self.hr = 1
         self.learning = True
+        self.dephased = False
 
     def set_epsilon(self, epsilon):
         def set_epsilon(learner, epsilon):
@@ -324,6 +329,7 @@ class MetaAgent(Agent):
         right = learner_class(actions, epsilon)
         self.learner = MetaLearner(left, right, epsilon, alpha=0.2, gamma=0.8)
         self.learning = True
+        self.dephased = False
 
     def set_epsilon(self, epsilon):
         def set_epsilon(learner, epsilon):
