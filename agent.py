@@ -193,7 +193,7 @@ class WrapperAgent(Agent):
         self.accumulated = 0
         self.fov = fov
         self.learner = learner
-        self.Learning = True
+        self.learning = True
         self.dephased = False
 
     def perform(self, explore=False, last_action=False, verbose=0):
