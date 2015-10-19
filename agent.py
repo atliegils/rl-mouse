@@ -145,9 +145,9 @@ class Agent:
         return learner.select()
 
     def reward(self, value):
-        if not self.learning: return
         if not self.is_hunger(value):
             self.accumulated += value
+        if not self.learning: return
         if isinstance(self.learner, QLearn): # provide next state for Q-Learners
             self.learner.learn(value, self.modify_state(self.get_fov(self.fov)))
         else:
@@ -300,9 +300,9 @@ class HistoricalAgent(Agent):
         return self._decide(new_learner)
 
     def reward(self, value):
-        if not self.learning: return
         if not self.is_hunger(value):
             self.accumulated += value
+        if not self.learning: return
         for s in self.selections:
             s.learn(value)
             if self.verbose == 3 and value != -2:
@@ -393,9 +393,9 @@ class MetaAgent(Agent):
         return self._decide(new_learner)
 
     def reward(self, value):
-        if not self.learning: return
         if not self.is_hunger(value):
             self.accumulated += value
+        if not self.learning: return
         self.learner.learn(value, self.next_states)
 
 # Like MetaAgent, but set the state of the top level agent to 1/0 depending on if it can see cheese
