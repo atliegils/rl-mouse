@@ -243,6 +243,9 @@ def evaluate(player, max_runs=5000, round_limit=300, name='evaluation'):
         data.append(data_point)
 
     # save results
+    dirname = os.path.dirname(outfile)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
     with open(outfile, 'w') as f:
         for datum in data:
             f.write(','.join(map(str,list(datum))) + '\n')
