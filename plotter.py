@@ -89,6 +89,8 @@ def evaluation_plot(fn):
 def compare_evals(fn1, fn2):
     assert fn1, 'fn1 is a {0}'.format(type(fn1))
     assert fn2, 'fn2 is a {0}'.format(type(fn2))
+    fn1 = fn1.replace('solutions/','')
+    fn2 = fn2.replace('solutions/','')
     base_fn = fn1[:fn1.find('.txt')], fn2[:fn2.find('.txt')]
     title=base_fn[0] + ' vs ' + base_fn[1]
     output_file(base_fn[0]+'vs'+base_fn[1]+'.html', title=title)
