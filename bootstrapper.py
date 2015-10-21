@@ -3,7 +3,7 @@ import argparse
 import copy
 import evaluator
 import summarizer
-import sys, traceback
+import os, sys, traceback
 from game import Game
 from plotter import evaluation_plot, compare_evals
 from  functools import partial
@@ -19,6 +19,7 @@ def convert(name):
 def evaluate(name, no_initial_training=False):
     # import the solution name into the global namespace as 'exercise'
     exercise = __import__(convert(name))
+    name = convert(name)
     # game and agent setup code
     game = Game(do_render=False)
     game.set_size(args.grid_size, args.grid_size)
@@ -52,7 +53,8 @@ def evaluate(name, no_initial_training=False):
         exercise.train(agent)
     # clean up after training
     # evaluate the training results
-    file_name = evaluator.evaluate(agent, name=file_name_add+'eval_'+name) 
+    folder = 'eval_solutions'
+    file_name = evaluator.evaluate(agent, name=os.path.join(folder, file_name_add+name))
     # print out a nice summary of how the evaluation went
     summarizer.summarize_e(file_name)
     return file_name

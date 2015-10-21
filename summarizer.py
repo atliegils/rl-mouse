@@ -37,7 +37,7 @@ def summarize_e(name):
     print 'High Score: {0}'.format(high_score)
     print 'Total extra steps: {0}'.format(extra_steps)
     print 'Average performance: {0}'.format(average_ratio)
-    magic = ((accumulated_reward - extra_steps * 0.2) / (extra_steps)) * average_ratio 
+    magic = ((accumulated_reward - extra_steps * 0.2 - timeouts * 10 - deaths) / (extra_steps)) * average_ratio 
 #   magic = ((best_local * 2 - deaths * 3) * (high_score + accumulated_reward / high_score) * 0.001 + (high_score * 0.001) - extra_steps * 0.001 - timeouts) * average_ratio
     print 'Evaluation score: {0}'.format(magic)
     print '\t',
