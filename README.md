@@ -19,14 +19,40 @@ The `train` method takes an `agent` as a parameter and performs any necessary ac
 ## Instructors (evaluating a solution)
 It's important to note that due to the stochastic policies of learners, a solution can yield different evaluation results between runs.
 
+### The evaluation bootstrapper
+
+#### Variables
+
+##### Independent
+- Grid size
+- Field of view
+- Alpha, Gamma (learning rate & discount factor)
+- Reward profile
+
+##### Dependent
+- Learning time
+- Target steps (dependent on grid size)
+- Extra steps (dependent on agent)
+- Other evaluation metrics
+
+#### Arguments (for the evaluation software)
+- Output file name
+- Dephase (first train it to learn the opposite of the task)
+- Solution (mandatory)
+- Comparison solution
+- Grid size
+- Field of view base size
+- Gamma (discount factor)
+- Reward profile
+
 ### Evaluating a single solution
 To evaluate a single solution, run `bootstrapper.py` with the solution name as an argument and any optional arguments to configure the game. Usage instructions follow.
 
-`usage: bootstrapper.py [solution_name] [-g GRID_SIZE] [-f FOV]`
+`usage: bootstrapper.py [solution_name] [-g GRID_SIZE] [-f FOV], -g [DISCOUNT_FACTOR]`
 
 ### Comparing two solutions
 Two solutions can be evaluated and plotted on the same chart for comparison. Usage instructions follow.
-`usage: bootstrapper.py [solution_name] [-c OTHER_SOLUTION] [-g GRID_SIZE] [-f FOV]`
+`usage: bootstrapper.py [solution_name] [-c OTHER_SOLUTION] [-g GRID_SIZE] [-f FOV], -g [DISCOUNT_FACTOR]`
                        
 
 # Documentation
