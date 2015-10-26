@@ -71,7 +71,7 @@ def get_range(name, index=3):
                 low = part
     return low, high
 
-def evaluation_plot(fn):
+def evaluation_plot(fn, display=True):
     base_fn = fn[:fn.find('.txt')]
     output_file(base_fn + '.html', title=base_fn)
     y = get_data(fn)
@@ -84,7 +84,10 @@ def evaluation_plot(fn):
 #   p.circle(x, y[3], color='blue', alpha=0.5, size=0.5)    # accumul. reward
     p.circle(x, y[4], color='orange', alpha=0.9, size=0.5)  # local reward
 
-    show(p)
+    if display:
+        show(p)
+    else:
+        save(p)
 
 def compare_evals(fn1, fn2):
     assert fn1, 'fn1 is a {0}'.format(type(fn1))
