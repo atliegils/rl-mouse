@@ -20,6 +20,11 @@ def evaluate(name, no_initial_training=False):
     # import the solution name into the global namespace as 'exercise'
     exercise = __import__(convert(name))
     name = convert(name)
+    def load_reward_profile(agent):
+        if args.custom_rewards:
+            agent.adjust_rewards(*map(int, args.custom_rewards.split(',')))
+        else:
+            exercise.reward_profile(agent)
     # game and agent setup code
     game = Game(do_render=False)
     game.set_size(args.grid_size, args.grid_size)
@@ -31,7 +36,8 @@ def evaluate(name, no_initial_training=False):
     agent.gamma = args.gamma
     agent.game.suppressed = True
     # train the agent using the provided solution
-    exercise.reward_profile(agent)
+    load_reward_profile(agent)
+#   exercise.reward_profile(agent)
     file_name_add = ''
     if not no_initial_training:
         if args.dephase:
@@ -47,7 +53,8 @@ def evaluate(name, no_initial_training=False):
     agent.game.high_score = 0
     agent.fov  = args.fov
     agent.game = original_game # if the training modifies the game, it is fixed here
-    exercise.reward_profile(agent)
+    load_reward_profile(agent)
+#   exercise.reward_profile(agent)
     if args.dephase:
         agent.dephase = False
         exercise.train(agent)
@@ -65,26 +72,38 @@ def main():
         file_name2 = evaluate(args.solution_name, no_initial_training=True)
         compare_evals(file_name, file_name2)
     else:
-        if args.outfile and os.path.exists(args.outfile):
-            raise OSError('The destination file already exists, move it or pick another name.')
-        file_name = evaluate(args.solution_name)
-        if args.outfile:
-            os.rename(file_name, args.outfile)
-            file_name = args.outfile
+        num_iters = 1 if not args.multi else args.multi
+        show = False if args.multi else True
+        evals = []
+        for iteration_number in range(num_iters):
+            if args.outfile and os.path.exists(args.outfile):
+                raise OSError('The destination file already exists, move it or pick another name.')
+            file_name = evaluate(args.solution_name)
+            if args.outfile or args.multi:
+                outname = file_name if not args.outfile else args.outfile
+                if args.multi:
+                    outname += str(iteration_number)
+                os.rename(file_name, outname)
+                file_name = outname
+            evals.append(file_name)
 
-        evaluation_plot(file_name)
+            evaluation_plot(file_name, display=show)
+        if args.multi:
+            summarizer.sum_sum(evals)           
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='RL Learner exercise')
     parser.add_argument('solution_name', default='exercise', nargs='?', help='exercise to evaluate')
-    parser.add_argument('--outfile', nargs='?', help='output file name')
+    parser.add_argument('--outfile', metavar='FILENAME', help='output file name')
     parser.add_argument('-g', '--grid_size', type=int, default=10, help='grid size')
     parser.add_argument('-f', '--fov', type=int, default=3, help='base field of view')
     parser.add_argument('--gamma', type=float, default=0.8, metavar='FLOAT', help='discount factor')
     parser.add_argument('-c', '--compare_to', metavar='OTHER_FILE', help='compare two solutions')
+    parser.add_argument('--custom_rewards', metavar='CHEESE,TRAP,HUNGER', help='reward profile in the format "c,t,h" (without quotes)')
     parser.add_argument('--dephase', action='store_true', help=u'swap reward scalars (180\N{DEGREE SIGN} out of phase)')
+    parser.add_argument('--multi', type=int, metavar='N', help='number of evaluations to make (single evaluations only)')
     args = parser.parse_args()
-    sys.path.insert(0, 'solutions')
+    sys.path.insert(0, 'solutions') # to avoid needing an __init__.py in the 'solutions' directory
     try:
         if args.compare_to:
             comparison()
