@@ -2,6 +2,45 @@ import argparse
 def avg(arr):
     return sum(arr)/len(arr)
 
+def sum_sum(names):
+    assert(names)
+    all_performances  = []
+    worst_performance = 1.0
+    best_performance  = 0.0
+    total_extra       = 0.0
+    least_extra       = float('inf')
+    most_extra        = 0.0
+    least_timeouts    = float('inf')
+    most_timeouts     = 0.0
+    least_deaths      = float('inf')
+    most_deaths       = 0.0
+    magics = []
+    for name in names:
+        _, _, _, d, t, es, ar, _, m = summarize_e(name)
+        # performance
+        worst_performance = min(ar, worst_performance)
+        best_performance = max(ar, best_performance)
+        all_performances.append(ar)
+        # extra steps
+        least_extra = min(es, least_extra)
+        most_extra = max(es, most_extra)
+        # timeouts
+        least_timeouts = min(t, least_timeouts)
+        most_timeouts = max(t, most_timeouts)
+        # deaths
+        least_deaths = min(d, least_deaths)
+        most_deaths = max(d, most_deaths)
+        magics.append(m)
+    average_performance = sum(all_performances)/len(all_performances)
+    print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+    print 'Summary report for {0} evaluations:'.format(len(names))
+    print 'Performance: MIN {0} || MAX {1} || AVG {2}'.format(worst_performance, best_performance, average_performance)
+    print 'Extra steps: MIN {0} || MAX {1}'.format(least_extra, most_extra)
+    print 'Timeouts   : MIN {0} || MAX {1}'.format(least_timeouts, most_timeouts)
+    print 'Deaths     : MIN {0} || MAX {1}'.format(least_deaths, most_deaths)
+    print 'Eval score : MIN {0} || MAX {1} || AVG {2}'.format(min(magics), max(magics), sum(magics)/len(magics))
+    print '_____________________________________________________'
+
 def summarize_e(name):
     print '========================'
     print '{0} summary:'.format(name)
@@ -46,7 +85,7 @@ def summarize_e(name):
         print 'FAIL'
     else:
         print 'PASS'
-    return (accumulated_reward, best_local, bl_round, deaths, timeouts, high_score)
+    return (accumulated_reward, best_local, bl_round, deaths, timeouts, extra_steps, average_ratio, high_score, magic)
 
 def summarize(name):
     print '========================'
