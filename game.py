@@ -97,6 +97,8 @@ class Game:
         return position, direction
 
     def move(self, action):
+        if action = '?':
+            action = random.choice(['left', 'right', 'forward'])
         dirs = ['left', 'up', 'right', 'down']
         ind = dirs.index(self.direction)
         # orient the mouse
