@@ -199,6 +199,56 @@ def generate_configurations():
                         col.append(config)
     return col
 
+def random_evaluate(player, runs=200, round_limit=300, name='rand_eval'):
+    target_limit = player.game._cw * player.game._ch / 2
+    if target_limit > round_limit:
+        round_limit = target_limit
+        print 'setting round limit to {0}'.format(round_limit)
+    player.game.suppressed = True
+    player.learning = False
+    outfile = name + '.txt'
+    local_length = 10 * round_limit
+    current_step = 0
+    timeouts     = 0
+    deaths       = 0
+    extra_steps  = 0 # NOTE: Special snowflake, see how used in evaluate
+    target_steps = 0 
+    data         = []
+    accumulated_reward = [] 
+    for _ in xrange(runs):
+        current_step = 0
+        local_deaths = 0
+        player.reset_game()
+        target_distance = dist_to_cheese(player.game)
+        while current_step < round_limit:
+            current_step += 1
+            player.game.render()
+            reward = player.perform()
+            accumulated_reward.append(reward)
+            if reward == -1:
+                deaths += 1
+                local_deaths += 1
+            if reward == 1:
+                break
+        else:
+            print 'timeout'
+            timeouts += 1
+        extra_steps += current_step - target_distance
+        target_steps += target_distance
+    # create data point
+    ratio = float(target_steps) / (extra_steps + target_steps)
+    data_point = (player.game.score, deaths, timeouts, player.accumulated, 0, local_deaths, extra_steps, ratio)
+    # save data point
+    data.append(data_point)
+    dirname = os.path.dirname(outfile)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    with open(outfile, 'a') as f:
+        for datum in data:
+            print 'writing:',','.join(map(str, list(datum))) + '\n'
+            f.write(','.join(map(str, list(datum))) + '\n')
+    return outfile
+
 def evaluate(player, max_runs=5000, round_limit=300, name='evaluation'):
     target_limit = player.game._cw * player.game._ch / 2
     if target_limit > round_limit:

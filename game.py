@@ -41,6 +41,7 @@ class Game:
             self.r = render.Renderer(self._cw * self._cc, self._ch * self._cc, self._cc)
 
     def __del__(self):
+        return # don't kill it :p otherwise we can't copy games
         if self.do_render:
             pygame.quit()
 

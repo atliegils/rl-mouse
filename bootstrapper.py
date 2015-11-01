@@ -5,7 +5,7 @@ import evaluator
 import summarizer
 import os, sys, traceback
 from game import Game
-from plotter import evaluation_plot, compare_evals
+from plotter import evaluation_plot, compare_evals, counter_plot
 from  functools import partial
 
 def comparison():
@@ -15,6 +15,11 @@ def comparison():
 
 def convert(name):
     return name.rstrip('.py').replace('/','.').replace('solutions.','')
+
+def custom_training(agent):
+    agent.set_epsilon(0.1)
+    for i in xrange(args.custom_training):
+        agent.perform()
 
 def evaluate(name, no_initial_training=False):
     # import the solution name into the global namespace as 'exercise'
@@ -45,8 +50,8 @@ def evaluate(name, no_initial_training=False):
         exercise.train(agent)
     else: 
         file_name_add = 'no_train_'
-    agent.reward_scaling([1, -1, -1])
     # clean up after training
+    agent.reward_scaling([1, -1, -1])
     agent.accumulated = 0   # reset accumulated rewards
     agent.set_epsilon(0.0)  # turn off exploration
     agent.game.reset()      # reset the game
@@ -58,13 +63,66 @@ def evaluate(name, no_initial_training=False):
     if args.dephase:
         agent.dephase = False
         exercise.train(agent)
-    # clean up after training
     # evaluate the training results
     folder = 'eval_solutions'
     file_name = evaluator.evaluate(agent, name=os.path.join(folder, file_name_add+name))
     # print out a nice summary of how the evaluation went
     summarizer.summarize_e(file_name)
     return file_name
+
+def count_evals(name):
+    # import the solution name into the global namespace as 'exercise'
+    exercise = __import__(convert(name))
+    name = convert('{0}_{1}'.format(args.grid_size, name))
+    
+    def load_reward_profile(agent):
+        if args.custom_rewards:
+            agent.adjust_rewards(*map(int, args.custom_rewards.split(',')))
+        else:
+            exercise.reward_profile(agent)
+    # game and agent setup code
+    game = Game(do_render=False)
+    game.set_size(args.grid_size, args.grid_size)
+    original_game = copy.copy(game)
+    # fetch the agent from the provided solution
+    agent = exercise.get_agent(game)
+    agent.reward_scaling([1, -1, -1])
+    agent.fov = args.fov
+    agent.gamma = args.gamma
+    agent.game.suppressed = True
+    folder = 'reval_solutions'
+    target_filename = os.path.join(folder, name)
+    try:
+        os.remove(target_filename + '.txt')
+    except OSError:
+        pass
+    for x in xrange(100):
+        game_copy = copy.copy(original_game)
+        agent.game = game_copy
+        # train the agent using the provided solution
+        load_reward_profile(agent)
+        agent.learning = True
+        print 'training {0}'.format(x)
+        if args.custom_training:
+            custom_training(agent)
+        else:
+            exercise.train(agent)
+        # clean up after training
+        agent.reward_scaling([1, -1, -1])
+        agent.accumulated = 0   # reset accumulated rewards
+        agent.set_epsilon(0.0)  # turn off exploration
+        agent.game.reset()      # reset the game
+        agent.game.high_score = 0
+        agent.fov  = args.fov
+        agent.game = original_game # if the training modifies the game, it is fixed here
+        load_reward_profile(agent)
+        # evaluate the training results
+        print 'evaluation {0}'.format(x)
+        file_name = evaluator.random_evaluate(agent, runs=200, name=target_filename)
+    # print out a nice summary of how the evaluation went
+    summarizer.summarize_e(file_name)
+    return file_name
+
 
 def main():
     if args.dephase:
@@ -78,7 +136,10 @@ def main():
         for iteration_number in range(num_iters):
             if args.outfile and os.path.exists(args.outfile):
                 raise OSError('The destination file already exists, move it or pick another name.')
-            file_name = evaluate(args.solution_name)
+            if args.count_evals:
+                file_name = count_evals(args.solution_name)
+            else:
+                file_name = evaluate(args.solution_name)
             if args.outfile or args.multi:
                 outname = file_name if not args.outfile else args.outfile
                 if args.multi:
@@ -87,7 +148,10 @@ def main():
                 file_name = outname
             evals.append(file_name)
 
-            evaluation_plot(file_name, display=show)
+            if args.count_evals:
+                counter_plot(file_name, display=show)
+            else:
+                evaluation_plot(file_name, display=show)
         if args.multi:
             summarizer.sum_sum(evals)           
 
@@ -101,6 +165,8 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--compare_to', metavar='OTHER_FILE', help='compare two solutions')
     parser.add_argument('--custom_rewards', metavar='CHEESE,TRAP,HUNGER', help='reward profile in the format "c,t,h" (without quotes)')
     parser.add_argument('--dephase', action='store_true', help=u'swap reward scalars (180\N{DEGREE SIGN} out of phase)')
+    parser.add_argument('--count_evals', action='store_true', help='run random evaluations')
+    parser.add_argument('--custom_training', type=int, metavar='STEPS', help='custom number of training steps per session (training only `performs` on the agent)')
     parser.add_argument('--multi', type=int, metavar='N', help='number of evaluations to make (single evaluations only)')
     args = parser.parse_args()
     sys.path.insert(0, 'solutions') # to avoid needing an __init__.py in the 'solutions' directory

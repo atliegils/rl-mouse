@@ -33,7 +33,7 @@ It's important to note that due to the stochastic policies of learners, a soluti
 - Learning time
 - Target steps (dependent on grid size)
 - Extra steps (dependent on agent)
-- Other evaluation metrics
+- Other evaluation metrics (deaths, timeouts, performance...)
 
 #### Arguments (for the evaluation software)
 - Output file name
