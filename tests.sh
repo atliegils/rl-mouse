@@ -1,19 +1,15 @@
 #!/bin/bash
 
-folder="compare_meta_flat2"
-
-mkdir $folder
-mkdir $folder/txt
-mkdir $folder/html
-
 CMD="./evaluator.py -b"
 PLOT="./plotter.py -b"
 ARGS="-l -m 30000 --round_limit 1000 -cr 2 -tr 5 -hr 1 -b --test"
+CMD="./bootstrapper.py"
+ARGS="--count_evals"
 
 # ARGS: FOV, GRID SIZE
 run () {
 	a=1
-	b=5
+	b=10
 	d=1
 
 	if [ "$1" ]
@@ -29,22 +25,32 @@ run () {
 		d=$3
 	fi
 
-	name="${a}_${b}x${b}_d${d}"
-	n1="${name}-flat"
-	n2="${name}-meta"
-	ARGS2="-g $b --fov $a"
-	echo $ARGS $ARGS2
-    $CMD $ARGS $ARGS2 -o ${n1}.txt -d $d && $PLOT ${n1}.txt
-    mv ${n1}.txt $folder/txt
-    mv ${n1}.html $folder/html
-    $CMD $ARGS $ARGS2 -o ${n2}.txt -d $d --meta && $PLOT ${n2}.txt
-	mv ${n2}.txt $folder/txt
-	mv ${n2}.html $folder/html
+	ARGS2="-g $b"
+    echo $CMD $ARGS $ARGS2 $a
+    $CMD $ARGS $ARGS2 $a
 }
 
-run 2 7 
-run 3 10
-run 3 11
-run 3 12
-run 3 15
+run "solutions/sarsa" 12
+run "solutions/qlearn" 12
+run "solutions/meta_P_Q" 12 
+run "solutions/meta_Q_simple" 12
+run "solutions/qplearn" 12
+run "solutions/sarsa_bigger" 12
+run "solutions/sarsa_smaller" 12
+
+run "solutions/sarsa" 15
+run "solutions/qlearn" 15
+run "solutions/meta_P_Q" 15 
+run "solutions/meta_Q_simple" 15
+run "solutions/qplearn" 15
+run "solutions/sarsa_bigger" 15
+run "solutions/sarsa_smaller" 15
+
+run "solutions/sarsa" 
+run "solutions/qlearn" 
+run "solutions/meta_P_Q"  
+run "solutions/meta_Q_simple" 
+run "solutions/qplearn" 
+run "solutions/sarsa_bigger" 
+run "solutions/sarsa_smaller" 
 
