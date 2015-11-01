@@ -59,7 +59,7 @@ class BaseLearner:
     def update_action(self, action):
         self.current_action = action
 
-    # select an action based on the currnet state of the learner
+    # select an action based on the current state of the learner
     def select(self):
         state = self.current_state
         if random.random < self.epsilon:
@@ -86,6 +86,33 @@ class QLearn(BaseLearner):
     def learn(self, reward, next_state):
         maxqnew = max([self.getQ(next_state, a) for a in self.actions])
         self.learnQ(self.current_state, self.current_action, reward, maxqnew)
+
+class QPLearn(QLearn):
+    # select an action based on the current state of the learner
+    def select(self):
+        def weighted_selection(items):
+            def normalize(items):
+                low_bound = min(items)
+                items = [x - low_bound for x in items]
+                return items
+            items = normalize(items)
+            r = random.uniform(0, sum(items))
+            s = 0.0
+            for i, weight in enumerate(items):
+                s += weight
+                if r < s: return i
+            return i
+        # select(self)
+        state = self.current_state
+        if random.random < self.epsilon:
+            action = random.choice(self.actions)
+        else:
+            vals = [self.getQ(state, a) for a in self.actions]
+            selection = weighted_selection(vals)
+#           print 'selected {0} from {1} ({2})'.format(selection, vals, self.actions[selection])
+            action = self.actions[selection]
+        self.current_action = action
+        return action
 
 # SARSA learners learn from 'experiences' -- good for online agents
 class SARSA(BaseLearner):
