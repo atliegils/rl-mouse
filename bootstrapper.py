@@ -96,7 +96,7 @@ def count_evals(name):
         os.remove(target_filename + '.txt')
     except OSError:
         pass
-    for x in xrange(100):
+    for x in xrange(args.max_count):
         game_copy = copy.copy(original_game)
         agent.game = game_copy
         # train the agent using the provided solution
@@ -166,6 +166,7 @@ if __name__ == '__main__':
     parser.add_argument('--custom_rewards', metavar='CHEESE,TRAP,HUNGER', help='reward profile in the format "c,t,h" (without quotes)')
     parser.add_argument('--dephase', action='store_true', help=u'swap reward scalars (180\N{DEGREE SIGN} out of phase)')
     parser.add_argument('--count_evals', action='store_true', help='run random evaluations')
+    parser.add_argument('--max_count', type=int, metavar='MAX', default=100, help='maximum number of steps to count to during count evaluations')
     parser.add_argument('--custom_training', type=int, metavar='STEPS', help='custom number of training steps per session (training only `performs` on the agent)')
     parser.add_argument('--multi', type=int, metavar='N', help='number of evaluations to make (single evaluations only)')
     args = parser.parse_args()
