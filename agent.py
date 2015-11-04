@@ -12,9 +12,13 @@ class Agent:
         self.reward_scaling([1, -1, -1])
         self.accumulated = 0
         self.fov = fov
+        self.learner_class = learner_class
         self.learner = learner_class(actions, epsilon)
         self.learning = True
         self.dephased = False
+
+    def replace_actions(self, actions):
+        self.learner = self.learner_class(actions, self.learner.epsilon)
 
     def set_epsilon(self, epsilon):
         self.learner.epsilon = epsilon
@@ -29,10 +33,10 @@ class Agent:
 
     def is_hunger(self, value):
         scaling_factor = (self.game._cw + self.game._ch) / 2
-        if scaling_factor * self.cr * self.scaling[0] == value \
-        or scaling_factor * self.tr * self.scaling[1] == value:
+        if self.cr * self.scaling[0] == value \
+        or self.tr * self.scaling[1] == value:
             return False
-        if self.hr * self.scaling[2] == value:
+        if float(self.hr * self.scaling[2]) / scaling_factor == value:
             return True
         print 'wow what happened in is_hunger? value was ', value
         return False
@@ -172,16 +176,22 @@ class Agent:
     def calc_reward(self, reward):
         scaling_factor = (self.game._cw + self.game._ch) / 2
         if reward == 1:
-            value = self.scaling[0] * abs(self.cr) * scaling_factor
+            value = self.scaling[0] * abs(self.cr)#* scaling_factor
         elif reward == -1:
-            value = self.scaling[1] * abs(self.tr) * scaling_factor
-        else:
-            value = self.scaling[2] * abs(self.hr)
+            value = self.scaling[1] * abs(self.tr)#* scaling_factor
+        else:                                     # 04-11-2015 moved scaling factor to hunger
+            value = float(self.scaling[2] * abs(self.hr)) / scaling_factor
         return value
 
     # This __ONLY__ exists for monkey patching perform more easily
     def modify_state(self, state):
         return state
+
+class TraceAgent(Agent):
+    def decide(self, learner):
+        action = learner.select()
+        print 'selected action {0}'.format(action)
+        return action
 
 # just wraps a learner in an agent so that it can perform
 class WrapperAgent(Agent):
@@ -326,6 +336,7 @@ class MetaAgent(Agent):
         self.score = 0
         self.accumulated = 0
         self.fov = fov
+        self.learner_class = learner_class
         left  = learner_class(actions, epsilon)
         right = learner_class(actions, epsilon)
         self.learner = MetaLearner(left, right, epsilon, alpha=0.2, gamma=0.8)

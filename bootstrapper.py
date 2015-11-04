@@ -21,28 +21,33 @@ def custom_training(agent):
     for i in xrange(args.custom_training):
         agent.perform()
 
-def evaluate(name, no_initial_training=False):
-    # import the solution name into the global namespace as 'exercise'
-    exercise = __import__(convert(name))
-    name = convert(name)
+def fetch_agent(exercise, game):
     def load_reward_profile(agent):
         if args.custom_rewards:
             agent.adjust_rewards(*map(int, args.custom_rewards.split(',')))
         else:
             exercise.reward_profile(agent)
-    # game and agent setup code
-    game = Game(do_render=False)
-    game.set_size(args.grid_size, args.grid_size)
-    original_game = copy.copy(game)
-    # fetch the agent from the provided solution
     agent = exercise.get_agent(game)
+    if args.custom_actions:
+        agent.replace_actions(args.custom_actions)
     agent.reward_scaling([1, -1, -1])
     agent.fov = args.fov
     agent.gamma = args.gamma
     agent.game.suppressed = True
     # train the agent using the provided solution
     load_reward_profile(agent)
-#   exercise.reward_profile(agent)
+    return agent
+
+def evaluate(name, no_initial_training=False):
+    # import the solution name into the global namespace as 'exercise'
+    exercise = __import__(convert(name))
+    name = convert(name)
+    # game and agent setup code
+    game = Game(do_render=False)
+    game.set_size(args.grid_size, args.grid_size)
+    original_game = copy.copy(game)
+    # fetch the agent from the provided solution
+    agent = fetch_agent(exercise, game)
     file_name_add = ''
     if not no_initial_training:
         if args.dephase:
@@ -85,11 +90,7 @@ def count_evals(name):
     game.set_size(args.grid_size, args.grid_size)
     original_game = copy.copy(game)
     # fetch the agent from the provided solution
-    agent = exercise.get_agent(game)
-    agent.reward_scaling([1, -1, -1])
-    agent.fov = args.fov
-    agent.gamma = args.gamma
-    agent.game.suppressed = True
+    agent = fetch_agent(exercise, game)
     folder = 'reval_solutions'
     target_filename = os.path.join(folder, name)
     try:
@@ -168,6 +169,7 @@ if __name__ == '__main__':
     parser.add_argument('--count_evals', action='store_true', help='run random evaluations')
     parser.add_argument('--max_count', type=int, metavar='MAX', default=100, help='maximum number of steps to count to during count evaluations')
     parser.add_argument('--custom_training', type=int, metavar='STEPS', help='custom number of training steps per session (training only `performs` on the agent)')
+    parser.add_argument('--custom_actions', type=lambda s: [item.strip() for item in s.split(' ')], metavar='left right forward ? ...', help='Replace solution actions with custom actions')
     parser.add_argument('--multi', type=int, metavar='N', help='number of evaluations to make (single evaluations only)')
     args = parser.parse_args()
     sys.path.insert(0, 'solutions') # to avoid needing an __init__.py in the 'solutions' directory
