@@ -232,11 +232,15 @@ class HistoricalAgent(Agent):
         self.accumulated = 0
         self.fov = fov
         self.create_learners(levels, epsilon, actions)
+        self.levels=levels
         self.cr = 5
         self.tr = 10
         self.hr = 1
         self.learning = True
         self.dephased = False
+
+    def replace_actions(self, actions):
+        self.create_learners(self.levels, epsilon, actions)
 
     def set_epsilon(self, epsilon):
         def set_epsilon(learner, epsilon):
@@ -337,11 +341,19 @@ class MetaAgent(Agent):
         self.accumulated = 0
         self.fov = fov
         self.learner_class = learner_class
+        self.epsilon = epsilon
+        self.alpha = 0.2
+        self.gamma = 0.9
         left  = learner_class(actions, epsilon)
         right = learner_class(actions, epsilon)
-        self.learner = MetaLearner(left, right, epsilon, alpha=0.2, gamma=0.8)
+        self.learner = MetaLearner(left, right, epsilon, alpha=0.2, gamma=0.9)
         self.learning = True
         self.dephased = False
+
+    def replace_actions(self, actions):
+        left = self.learner_class(actions, self.epsilon)
+        right = self.learner_class(actions, self.epsilon)
+        self.learner = MetaLearner(left, right, self.epsilon, self.alpha, self.gamma)
 
     def set_epsilon(self, epsilon):
         def set_epsilon(learner, epsilon):
