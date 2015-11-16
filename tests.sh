@@ -12,6 +12,10 @@ run () {
 	b=10
 	s=200
 	d=1
+	args3=""
+	args4=""
+	args5=""
+	args6=""
 
 	if [ "$1" ]
 	then
@@ -23,21 +27,40 @@ run () {
 	fi
 	if [ "$3" ]
 	then
-		d=$3
+		s=$3
 	fi
+	shift
+	shift
+	shift
+
 
 	ARGS2="-g $b"
-    echo $CMD $ARGS $ARGS2 $a --max_count $s
-    $CMD $ARGS $ARGS2 $a
+    echo $CMD $ARGS $ARGS2 $a --max_count $s $*
+    $CMD $ARGS $ARGS2 $a --max_count $s $*
 }
+#run "solutions/sarsa" 12 250 --custom_actions "left,right,forward"
+#run "solutions/qlearn" 12 250 --custom_actions "left,right,forward"
+#run "solutions/meta_simple" 12 250 --custom_actions "left,right,forward"
+#run "solutions/meta_Q_simple" 12 250 --custom_actions "left,right,forward"
+#run "solutions/sarsa" 15 250 --custom_actions "left,right,forward"
+#run "solutions/qlearn" 15 250 --custom_actions "left,right,forward"
+#run "solutions/meta_simple" 15 250 --custom_actions "left,right,forward"
+#run "solutions/meta_Q_simple" 15 250 --custom_actions "left,right,forward"
+#run "solutions/sarsa" 10 250 --custom_actions "left,right,forward"
+#run "solutions/qlearn" 10 250 --custom_actions "left,right,forward"
+#run "solutions/meta_simple" 10 250 --custom_actions "left,right,forward"
+#run "solutions/meta_Q_simple" 10 250 --custom_actions "left,right,forward"
+#run "solutions/sarsa" 12 250 --custom_actions "left,right,forward,?"
+#run "solutions/qlearn" 12 250 --custom_actions "left,right,forward,?"
+#run "solutions/meta_simple" 12 250 --custom_actions "left,right,forward,?"
+#run "solutions/meta_Q_simple" 12 250 --custom_actions "left,right,forward,?"
 
-run "solutions/sarsa" 12 200
-run "solutions/qlearn" 12 200
-run "solutions/meta_Q_simple" 12 200
-run "solutions/sarsa" 15 200
-run "solutions/qlearn" 15 200
-run "solutions/meta_Q_simple" 15 200
-run "solutions/sarsa" 10 200
-run "solutions/qlearn" 10 200
-run "solutions/meta_Q_simple" 10 200
+run "solutions/sarsa" 15 250 --custom_actions "left,right,forward,?"
+run "solutions/qlearn" 15 250 --custom_actions "left,right,forward,?"
+run "solutions/meta_simple" 15 250 --custom_actions "left,right,forward,?"
+run "solutions/meta_Q_simple" 15 250 --custom_actions "left,right,forward,?"
+run "solutions/sarsa" 10 250 --custom_actions "left,right,forward,?"
+run "solutions/qlearn" 10 250 --custom_actions "left,right,forward,?"
+run "solutions/meta_simple" 10 250 --custom_actions "left,right,forward,?"
+run "solutions/meta_Q_simple" 10 250 --custom_actions "left,right,forward,?"
 
