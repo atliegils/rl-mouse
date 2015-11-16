@@ -111,6 +111,9 @@ def dist_to_cheese(game):
 
     return min(dist + add, max_len)
 
+def expected_distance(actual_dist):
+    return float(actual_dist) * 3.85   # approximately accurate for trained sarsa on 15x15
+
 def benchmark(player, max_runs=5000):
     player.game.suppressed = True
     outfile = 'test.txt'
@@ -199,6 +202,32 @@ def generate_configurations():
                         col.append(config)
     return col
 
+def pong_evaluate(player, runs=200, name='pong_eval'):
+    player.game.suppressed = True
+    player.learning = False
+    outfile = name + '.txt'
+    wins = 0
+    loss = 0
+    data = []
+    for _ in xrange(runs):
+        winner = 0
+        while not winner:
+            winner = player.perform()
+            if winner == 1:
+                wins += 1
+            elif winner == 2:
+                loss += 1   
+            if winner:
+                data.append(winner)
+    dirname = os.path.dirname(outfile)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    with open(outfile, 'a') as f:
+#       print 'W {0} | {1} L'.format(wins, loss)
+#       f.write(','.join(map(str, list(data))) + '\n')
+        f.write('{0},{1}'.format(wins, loss) + '\n')
+    return outfile, wins, loss
+
 def random_evaluate(player, runs=200, round_limit=300, name='rand_eval'):
     target_limit = player.game._cw * player.game._ch / 2
     if target_limit > round_limit:
@@ -228,16 +257,18 @@ def random_evaluate(player, runs=200, round_limit=300, name='rand_eval'):
             if reward == -1:
                 deaths += 1
                 local_deaths += 1
-            if reward == 1:
+            if reward == 1: # cheese was acquired
                 break
-        else:
+        else:   # no cheese was acquired before timeout
             print 'timeout'
             timeouts += 1
         extra_steps += current_step - target_distance
         target_steps += target_distance
     # create data point
     ratio = float(target_steps) / (extra_steps + target_steps)
-    data_point = (player.game.score, deaths, timeouts, player.accumulated, 0, local_deaths, extra_steps, ratio)
+    expected_steps = expected_distance(target_steps)
+    performance = expected_steps / (expected_steps + (extra_steps - target_steps))
+    data_point = (player.game.score, deaths, timeouts, player.accumulated, 0, local_deaths, extra_steps, ratio, performance)
     # save data point
     data.append(data_point)
     dirname = os.path.dirname(outfile)
