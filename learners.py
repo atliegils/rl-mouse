@@ -5,7 +5,7 @@ class NotImplementedException(Exception):
 
 ### Base learner class
 class BaseLearner:
-    def __init__(self, actions, epsilon=0.1, alpha=0.2, gamma=0.8):
+    def __init__(self, actions, epsilon=0.1, alpha=0.2, gamma=0.9):
         self.q = {}
         self.epsilon = epsilon
         self.alpha   = alpha
@@ -16,6 +16,12 @@ class BaseLearner:
         self.last_state  = None
         self.current_action = None
         self.current_state  = None
+
+    def dump_policy(self, dest):
+        import pickle
+        with open('policies/' + dest + '.pol', 'w') as f:
+            pickle.dump(boj, f)
+        
 
     # sets the current state of the learner and updates the last state and action
     def set_state(self, state):
@@ -87,6 +93,7 @@ class QLearn(BaseLearner):
         maxqnew = max([self.getQ(next_state, a) for a in self.actions])
         self.learnQ(self.current_state, self.current_action, reward, maxqnew)
 
+# Note: not using softmax
 class QPLearn(QLearn):
     # select an action based on the current state of the learner
     def select(self):
@@ -127,7 +134,7 @@ class SARSA(BaseLearner):
 # Learner that optionally selects its action based on a past state
 class HistoryManager(BaseLearner):
 
-    def __init__(self, epsilon=0.1, alpha=0.2, gamma=0.8):
+    def __init__(self, epsilon=0.1, alpha=0.2, gamma=0.9):
         self.q = {}
         self.epsilon = epsilon
         self.alpha   = alpha
@@ -198,7 +205,7 @@ class HistoryManager(BaseLearner):
 # Meta learner that forms a tree structure of learners, rewarding an
 class MetaLearner(BaseLearner):
     
-    def __init__(self, left, right, epsilon=0.1, alpha=0.2, gamma=0.8):
+    def __init__(self, left, right, epsilon=0.1, alpha=0.2, gamma=0.9):
         self.q = {}
         self.epsilon = epsilon
         self.alpha   = alpha
