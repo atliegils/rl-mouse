@@ -3,8 +3,28 @@ import time, traceback
 from game import Game
 from learners import HistoryManager, SARSA, MetaLearner, QLearn
 
-# CAT, CHEESE AND TRAP AGENT
-class Agent:
+class BaseAgent(object):
+    def __init__(self, game, actions, epsilon=0.1, learner_class=SARSA):
+        self.game = game
+        self.score = 0
+        self.accumulated = 0
+#       self.fov = fov # TODO: test if this is needed
+        self.learner_class = learner_class
+        self.learner = learner_class(actions, epsilon)
+        self.learning = True
+
+    def replace_actions(self, actions):
+        self.learner = self.learner_class(actions, self.learner.epsilon)
+
+    def set_epsilon(self, epsilon):
+        self.learner.epsilon = epsilon
+
+    def decide(self, learner):
+        return learner.select()
+
+
+# CAT, CHEESE AND TRAP AGENTS
+class Agent(BaseAgent):
     def __init__(self, game, actions, epsilon=0.1, fov=3, learner_class=SARSA):
         self.game = game
         self.score = 0
@@ -16,12 +36,6 @@ class Agent:
         self.learner = learner_class(actions, epsilon)
         self.learning = True
         self.dephased = False
-
-    def replace_actions(self, actions):
-        self.learner = self.learner_class(actions, self.learner.epsilon)
-
-    def set_epsilon(self, epsilon):
-        self.learner.epsilon = epsilon
 
     def adjust_rewards(self, cr, tr, hr):
         self.cr = cr
@@ -145,9 +159,6 @@ class Agent:
         self.score = 0
         self.game.reset()
 
-    def decide(self, learner):
-        return learner.select()
-
     def reward(self, value):
         if not self.is_hunger(value):
             self.accumulated += value
@@ -186,6 +197,66 @@ class Agent:
     # This __ONLY__ exists for monkey patching perform more easily
     def modify_state(self, state):
         return state
+
+class OmniscientAgent(Agent):
+    def __init__(self, game, actions, epsilon=0.1, learner_class=SARSA):
+        self.game = game
+        self.score = 0
+        self.adjust_rewards( 1,  1,  0 )
+        self.reward_scaling([1, -1, -1])
+        self.accumulated = 0
+        self.learner_class = learner_class
+        self.learner = learner_class(actions, epsilon)
+        self.learning = True
+        self.dephased = False
+        self.fov = -1
+
+    def get_fov(self, _): # TODO: check if `_` is allowed here
+        # We have a NxN grid, but the mouse in at (x, y)
+        # We must normalize so that x,y is always constant,
+        # to ensure that the agent's _perspective_ doesn't change
+        # we do this by letting x:=y:=0 for any position
+        # we also rotate so that the mouse is always facing 'forward'
+        x, y = self.game.mouse
+        orient = self.game.direction
+        # start by building it normally
+        grid = []       # 'rows'
+        for y in xrange(self.game._ch):
+            row = []    # single row in matrix
+            for x in xrange(self.game._cw):
+                row.append(self.item_at(x,y))
+            grid.append(row)
+        # now align it (transpose by mouse coordinates)
+        def transpose(matrix, x, y): # <-- HERE IS A FUNCTION, USE IT
+            m_start = matrix[y:]
+            m_end = matrix[:y]
+            the_matrix = m_end.extend(m_start) # transposed 'down'
+            matrix = []
+            for row in the_matrix:
+                row_start = row[x:]
+                row_end = row[:x]
+                row = row_end.extend(row_start) # transposed 'sideways'
+                matrix.append(row)
+            return matrix
+        grid = transpose(grid, x, y)
+        # now rotate the matrix as many times as necessary
+        num_rotations = 0
+        transposition = 0,0
+        if orient == 'right':
+            num_rotations = 1
+            transposition = 0, self.game._cw
+        elif orient == 'down':
+            num_rotations = 2
+            transposition = self.game._ch, 0
+        elif orient == 'left':
+            num_rotations = 3
+            transposition = self.game._ch, self.game._cw
+        for rot in xrange(num_rotations):
+            grid = zip(*grid[::-1])
+        # Now we have a problem -- we've rotated by some degrees so 
+        # the origin (0,0) may have moved. We transpose again!
+        grid = transpose(grid, *transposition)
+        return grid
 
 class TraceAgent(Agent):
     def decide(self, learner):
