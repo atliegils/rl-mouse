@@ -97,14 +97,31 @@ def counter_plot(fn, display=True):
     p = figure(title=base_fn, x_axis_label='evaluation', y_axis_label='amount', plot_width=1000)
     p.extra_y_ranges = {'reward': Range1d(start=0, end=max(y[3])*1.05), 'ratio': Range1d(start=0, end=1.1)}
     p.add_layout(LinearAxis(y_range_name='reward'), 'right')
+    p.add_layout(LinearAxis(y_range_name='ratio'), 'left')
 #  p.add_layout(LinearAxis(y_range_name='ratio'), 'right')
 #   p.circle(x, y[6], color='teal', alpha=0.5, size=3)      # extra steps
 #   p.circle(x, y[0], color='teal', alpha=0.5, size=0.5)    # score
     p.circle(x, y[1], color='red', alpha=0.8, size=2)     # deaths
     p.circle(x, y[2], color='black', alpha=0.8, size=2)   # timeouts 
     p.triangle(x, y[7], color='black', alpha=1, size=5, y_range_name='ratio')    # ratio
+    p.triangle(x, y[8], color='teal', alpha=1, size=5, y_range_name='ratio')    # performance
     p.line(x, y[3], color='blue', size=3, y_range_name='reward')    # accumul. reward
-    p.y_range = Range1d(0, max(max(y[1]),max([2]))*1.10)
+    p.y_range = Range1d(0, max(max(y[1]),max(y[2]))*1.10)
+
+    if display:
+        show(p)
+    else:
+        save(p)
+
+def pong_plot(fn, display=True):
+    base_fn = fn[:fn.find('.txt')]
+    output_file(base_fn + '.html', title=base_fn)
+    y = get_data(fn)
+    x = range(len(y[0]))
+    p = figure(title=base_fn, x_axis_label='evaluation', y_axis_label='count', plot_width=1000)
+    p.line(x, y[0], color='teal', alpha=0.8)    # wins
+    p.line(x, y[1], color='red', alpha=0.4)     # losses
+    p.y_range = Range1d(0, max(max(y[1]),max([0]))*1.10)
 
     if display:
         show(p)
