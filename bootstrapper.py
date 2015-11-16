@@ -92,11 +92,23 @@ def count_evals(name):
     # fetch the agent from the provided solution
     agent = fetch_agent(exercise, game)
     folder = 'reval_solutions'
-    target_filename = os.path.join(folder, name)
+    configuration = setting_configuration()
+    target_path = os.path.join(folder, configuration[0])
+    target_filename = os.path.join(target_path, name)
+    try:
+        os.makedirs(target_path)
+    except OSError as e: # silently ignore any errors, other errors _will_ appear if this fails
+        import errno
+        if e.errno == errno.EEXIST and os.path.isdir(target_path):
+            pass
+        else: raise
+    with open(os.path.join(target_path, 'settings.txt'), 'w') as fh:
+        fh.write(configuration[1])
     try:
         os.remove(target_filename + '.txt')
     except OSError:
         pass
+    winning = 0
     for x in xrange(args.max_count):
         game_copy = copy.copy(original_game)
         agent.game = game_copy
@@ -120,6 +132,16 @@ def count_evals(name):
         # evaluate the training results
         print 'evaluation {0}'.format(x)
         file_name = evaluator.random_evaluate(agent, runs=200, name=target_filename)
+        with open(file_name, 'r') as fh:
+            lines = fh.read().splitlines()
+            if float(lines[-1].split(',')[8]) >= 1:
+                if winning > 10:
+                    print 'this one is winning, done'
+                    break
+                else:
+                    winning += 1
+            else:
+                winning = max(0, winning - 1)
     # print out a nice summary of how the evaluation went
     summarizer.summarize_e(file_name)
     return file_name
@@ -156,6 +178,28 @@ def main():
         if args.multi:
             summarizer.sum_sum(evals)           
 
+def setting_configuration():
+    config_lines = []
+    for arg in vars(args):
+        config_lines.append('{0}: {1}'.format(arg, getattr(args, arg)))
+    config_name = '+'.join(sys.argv[1:]).strip('.').strip('/')
+
+    return config_name, '\n'.join(config_lines)+'\n'
+
+def do_initializations():
+    sys.path.insert(0, 'solutions') # to avoid needing an __init__.py in the 'solutions' directory
+    if not args.seed: # do as random.py source code to generate a random seed
+        try:
+            from os import urandom as _urandom
+            from binascii import hexlify as _hexlify
+            a = long(_hexlify(_urandom(16)), 16)
+        except NotImplementedError:
+            import time
+            a = long(time.time() * 256) # use fractional seconds
+        args.seed = a
+    import random 
+    random.seed(args.seed)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='RL Learner exercise')
     parser.add_argument('solution_name', default='exercise', nargs='?', help='exercise to evaluate')
@@ -169,10 +213,11 @@ if __name__ == '__main__':
     parser.add_argument('--count_evals', action='store_true', help='run random evaluations')
     parser.add_argument('--max_count', type=int, metavar='MAX', default=100, help='maximum number of steps to count to during count evaluations')
     parser.add_argument('--custom_training', type=int, metavar='STEPS', help='custom number of training steps per session (training only `performs` on the agent)')
-    parser.add_argument('--custom_actions', type=lambda s: [item.strip() for item in s.split(' ')], metavar='left right forward ? ...', help='Replace solution actions with custom actions')
+    parser.add_argument('--custom_actions', type=lambda s: [item.strip() for item in s.split(',')], metavar='"left,right,forward,?",...', help='Replace solution actions with custom actions')
     parser.add_argument('--multi', type=int, metavar='N', help='number of evaluations to make (single evaluations only)')
+    parser.add_argument('--seed', type=int, metavar='N', default=0, help='random seed (0 means system time)')
     args = parser.parse_args()
-    sys.path.insert(0, 'solutions') # to avoid needing an __init__.py in the 'solutions' directory
+    do_initializations()
     try:
         if args.compare_to:
             comparison()
