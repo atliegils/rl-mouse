@@ -19,8 +19,17 @@ class BaseLearner:
 
     def dump_policy(self, dest):
         import pickle
+        try:
+            import os
+            target_path = 'policies'
+            os.makedirs(target_path)
+        except OSError as e: # silently ignore any errors, other errors _will_ appear if this fails
+            import errno
+            if e.errno == errno.EEXIST and os.path.isdir(target_path):
+                pass
+            else: raise
         with open('policies/' + dest + '.pol', 'w') as f:
-            pickle.dump(boj, f)
+            pickle.dump(self.q, f)
         
 
     # sets the current state of the learner and updates the last state and action
