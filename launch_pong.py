@@ -20,7 +20,8 @@ def pong_eval(name):
     exercise = __import__(convert(name))
     name = convert('{0}'.format(name))
     # game and agent setup code
-    game = Pong(do_render=False)
+    game = Pong(do_render=args.render)
+#   game.render_time = 0.00001 # immediate rendering (visual debugging)
     original_game = copy.copy(game)
     # fetch the agent from the provided solution
     agent = exercise.get_agent(game)
@@ -41,20 +42,30 @@ def pong_eval(name):
         os.remove(target_filename + '.txt')
     except OSError:
         pass
-    winning = 0
-    for x in xrange(args.max_count):
+    for x in xrange(args.initial_training - 1):
         game_copy = copy.copy(original_game)
+        game_copy.do_render = False     # don't render initial training
+        agent.game = game_copy
+        agent.learning = True
+        exercise.train(agent)
+    winning = 0
+    for x in xrange(args.training_epochs):
+        game_copy = copy.copy(original_game)
+        game_copy.do_render = False     # don't render training
         agent.game = game_copy
         # train the agent using the provided solution
         agent.learning = True
         exercise.train(agent)
+        agent.learner.dump_policy(str(x))
         # clean up after training
         agent.accumulated = 0   # reset accumulated rewards
         agent.set_epsilon(0.0)  # turn off exploration
         agent.game.reset()      # reset the game
         agent.game = original_game # if the training modifies the game, it is fixed here
         # evaluate the training results
-        file_name, wins, loss = evaluator.pong_evaluate(agent, runs=200, name=target_filename)
+        agent.game.do_render = args.render
+        print 'evaluating'
+        file_name, wins, loss = evaluator.pong_evaluate(agent, runs=args.eval_games, name=target_filename)
         if wins > loss * 10:
             winning += 1
             if winning > 10:
@@ -88,8 +99,11 @@ def do_initializations():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Pong RL Agent evaluator')
     parser.add_argument('solution_name', default='solutions/pong_sarsa', nargs='?', help='solution to evaluate')
-    parser.add_argument('--max_count', type=int, metavar='MAX', default=100, help='maximum number of steps to count to during count evaluations')
+    parser.add_argument('--eval_games', type=int, metavar='NUM', default=200, help='Number of games to play per evaluation')
+    parser.add_argument('--initial_training', type=int, metavar='EPOCHS', default=1, help='number of training epochs to give the agent before the first evaluation')
+    parser.add_argument('--training_epochs', type=int, metavar='MAX', default=100, help='maximum number of training epochs')
     parser.add_argument('--seed', type=int, metavar='N', default=0, help='random seed (0 means system time)')
+    parser.add_argument('--render', action='store_true', help='render pong')
     args = parser.parse_args()
     do_initializations()
     try:

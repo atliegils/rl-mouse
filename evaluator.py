@@ -211,13 +211,14 @@ def pong_evaluate(player, runs=200, name='pong_eval'):
     data = []
     for _ in xrange(runs):
         winner = 0
-        while not winner:
+        count = 0
+        while not winner and count <= 1000:
             winner = player.perform()
             if winner == 1:
                 wins += 1
             elif winner == 2:
                 loss += 1   
-            if winner:
+            if winner or count == 1000:
                 data.append(winner)
     dirname = os.path.dirname(outfile)
     if not os.path.exists(dirname):

@@ -50,19 +50,21 @@ class Rectangle:
     def __repr__(self):
         return '{0} {1} {2} {3}'.format(self.x, self.y, self.width, self.height)
 
-import pygame
-from pygame.locals import *
 
 class Pong:
 
     def __init__(self, do_render=True):
         self.area = Rectangle(0, 0, 640, 480)
-        if do_render or True: # can't not render pong!
+        if do_render: 
+            global pygame
+            import pygame
+#           from pygame.locals import *
             pygame.init()
             self.display = pygame.display.set_mode((self.area.width, self.area.height))
             pygame.display.set_caption('Pong')
-        self.clock = pygame.time.Clock()
+#           self.clock = pygame.time.Clock()
         self.do_render = do_render
+        self.render_time = 0.012
         self.scores = [0, 0]
         self.moved = False
         self.discrete = False
@@ -82,7 +84,7 @@ class Pong:
     def serve(self):
         angle = random.random() - 0.45
         speed = random.choice([9, -9])
-        self.ball = self.Ball((angle, speed), Rectangle(self.area.width/2, self.area.height/2, 9, 9), self.area) #pygame.Rect(320, 240, 9, 9))
+        self.ball = self.Ball((angle, speed), Rectangle(self.area.width/2, self.area.height/2, 15, 15), self.area) #pygame.Rect(320, 240, 9, 9))
 
     def play_frame(self, action):
         self.move(action)
@@ -147,8 +149,10 @@ class Pong:
         for paddle in self.paddles:
             pygame.draw.rect(self.display, WHITE, rectify(paddle.rect))
         pygame.display.update()
-        import time
-        time.sleep(0.02)
+        # unnecessary code: (replaces clock but delays more than just rendering)
+        if self.render_time:
+            import time
+            time.sleep(self.render_time)
 
 
     class Ball:
@@ -159,14 +163,16 @@ class Pong:
             self.rect = rect
 #           self.area = pygame.display.get_surface().get_rect()
             self.area = area
+            self.last_collision = 0
 
         def update(self, paddles):
+            self.last_collision = 0
             newpos = self.calcnewpos(self.rect, self.vector)
             (angle, z) = self.vector
             if not self.area.contains(newpos):
                 if newpos.y < self.area.y or newpos.y > self.area.y + self.area.height:
                     angle = -angle
-                elif self.rect.x < self.area.x:
+                elif self.rect.x + self.rect.width < self.area.x:
                     return 2
                 elif self.rect.x > self.area.x + self.area.width:
                     return 1
@@ -176,7 +182,8 @@ class Pong:
                         if idx == 1 and (angle > math.pi * 1.5 or angle < math.pi/2) \
                         or idx == 0 and (angle < math.pi * 1.5 and angle > math.pi/2):
                             angle = math.pi - angle
-                            angle += random.choice([random.random() / 0.9, -random.random() / 0.9])
+                            angle += random.choice([random.random() / 0.8, -random.random() / 0.8])
+                            self.last_collision = idx + 1
             self.rect = newpos
             self.vector = (angle, z)
             return 0
@@ -200,6 +207,13 @@ class Pong:
             self.rect = Rectangle(side_val, area.height/2, 20, 50)
             self.speed = 10
             self.state = 'still'
+
+        def handicap(self, value):
+            if self.side == 'left':
+                side_val = 0
+            elif self.side == 'right':
+                side_val = self.area.width - 20
+            self.rect = Rectangle(side_val, self.rect.y, 20, 50 + value)
 
         def moveup(self):
             rect = self.rect.move(0, -self.speed)
