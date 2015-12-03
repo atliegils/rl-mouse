@@ -18,7 +18,8 @@ class BaseLearner:
         self.current_state  = None
 
     def dump_policy(self, dest):
-        import pickle
+#       import pickle
+        from pprint import pprint
         try:
             import os
             target_path = 'policies'
@@ -29,8 +30,8 @@ class BaseLearner:
                 pass
             else: raise
         with open('policies/' + dest + '.pol', 'w') as f:
-            pickle.dump(self.q, f)
-        
+#           pickle.dump(self.q, f)
+            pprint(self.q, stream=f)
 
     # sets the current state of the learner and updates the last state and action
     def set_state(self, state):

@@ -43,7 +43,7 @@ def evaluate(name, no_initial_training=False):
     exercise = __import__(convert(name))
     name = convert(name)
     # game and agent setup code
-    game = Game(do_render=False)
+    game = Game(do_render=args.render)
     game.set_size(args.grid_size, args.grid_size)
     original_game = copy.copy(game)
     # fetch the agent from the provided solution
@@ -63,8 +63,8 @@ def evaluate(name, no_initial_training=False):
     agent.game.high_score = 0
     agent.fov  = args.fov
     agent.game = original_game # if the training modifies the game, it is fixed here
-    load_reward_profile(agent)
-#   exercise.reward_profile(agent)
+#   load_reward_profile(agent)
+    exercise.reward_profile(agent)
     if args.dephase:
         agent.dephase = False
         exercise.train(agent)
@@ -86,7 +86,7 @@ def count_evals(name):
         else:
             exercise.reward_profile(agent)
     # game and agent setup code
-    game = Game(do_render=False)
+    game = Game(do_render=args.render)
     game.set_size(args.grid_size, args.grid_size)
     original_game = copy.copy(game)
     # fetch the agent from the provided solution
@@ -109,41 +109,48 @@ def count_evals(name):
     except OSError:
         pass
     winning = 0
-    for x in xrange(args.max_count):
-        game_copy = copy.copy(original_game)
-        agent.game = game_copy
-        # train the agent using the provided solution
-        load_reward_profile(agent)
-        agent.learning = True
-        print 'training {0}'.format(x)
-        if args.custom_training:
-            custom_training(agent)
-        else:
-            exercise.train(agent)
-        # clean up after training
-        agent.reward_scaling([1, -1, -1])
-        agent.accumulated = 0   # reset accumulated rewards
-        agent.set_epsilon(0.0)  # turn off exploration
-        agent.game.reset()      # reset the game
-        agent.game.high_score = 0
-        agent.fov  = args.fov
-        agent.game = original_game # if the training modifies the game, it is fixed here
-        load_reward_profile(agent)
-        # evaluate the training results
-        print 'evaluation {0}'.format(x)
-        file_name = evaluator.random_evaluate(agent, runs=200, name=target_filename)
-        with open(file_name, 'r') as fh:
-            lines = fh.read().splitlines()
-            if float(lines[-1].split(',')[8]) >= 1:
-                if winning > 10:
-                    print 'this one is winning, done'
-                    break
-                else:
-                    winning += 1
+    try:
+        for x in xrange(args.max_count):
+            game_copy = copy.copy(original_game)
+            agent.game = game_copy
+            # train the agent using the provided solution
+            load_reward_profile(agent)
+            agent.learning = True
+            print 'training {0}'.format(x)
+            if args.custom_training:
+                custom_training(agent)
             else:
-                winning = max(0, winning - 1)
+                exercise.train(agent)
+            # clean up after training
+            agent.reward_scaling([1, -1, -1])
+            agent.accumulated = 0   # reset accumulated rewards
+            agent.set_epsilon(0.0)  # turn off exploration
+            agent.game.reset()      # reset the game
+            agent.game.high_score = 0
+            agent.fov  = args.fov
+            agent.game = original_game # if the training modifies the game, it is fixed here
+            load_reward_profile(agent)
+            # evaluate the training results
+            print 'evaluation {0}'.format(x)
+            file_name = evaluator.random_evaluate(agent, runs=200, name=target_filename)
+    #       This is a space hog, I don't have harddrive space to save policies - throstur
+    #       agent.learner.dump_policy('count_{0}'.format(x))
+            with open(file_name, 'r') as fh:
+                lines = fh.read().splitlines()
+                if float(lines[-1].split(',')[8]) >= 1:
+                    if winning > 10:
+                        print 'this one is winning, done'
+                        if args.allow_early_finish:
+                            break
+                    else:
+                        winning += 1
+                else:
+                    winning = max(0, winning - 1)
+    except KeyboardInterrupt:
+        print 'Quitting early...'
+        pass # just stop evaluating
     # print out a nice summary of how the evaluation went
-    summarizer.summarize_e(file_name)
+    summarizer.summarize_ec(file_name)
     return file_name
 
 
@@ -157,7 +164,7 @@ def main():
         show = False if args.multi else True
         evals = []
         for iteration_number in range(num_iters):
-            if args.outfile and os.path.exists(args.outfile):
+            if args.outfile and os.path.exists(args.outfile): # what if args.multi?
                 raise OSError('The destination file already exists, move it or pick another name.')
             if args.count_evals:
                 file_name = count_evals(args.solution_name)
@@ -212,10 +219,12 @@ if __name__ == '__main__':
     parser.add_argument('--dephase', action='store_true', help=u'swap reward scalars (180\N{DEGREE SIGN} out of phase)')
     parser.add_argument('--count_evals', action='store_true', help='run random evaluations')
     parser.add_argument('--max_count', type=int, metavar='MAX', default=100, help='maximum number of steps to count to during count evaluations')
+    parser.add_argument('--allow_early_finish', action="store_true", help='allow the count to end early if the solution is good')
     parser.add_argument('--custom_training', type=int, metavar='STEPS', help='custom number of training steps per session (training only `performs` on the agent)')
     parser.add_argument('--custom_actions', type=lambda s: [item.strip() for item in s.split(',')], metavar='"left,right,forward,?",...', help='Replace solution actions with custom actions')
     parser.add_argument('--multi', type=int, metavar='N', help='number of evaluations to make (single evaluations only)')
     parser.add_argument('--seed', type=int, metavar='N', default=0, help='random seed (0 means system time)')
+    parser.add_argument('--render', action='store_true', help='render the evaluation (not recommended, greatly affects performance)')
     args = parser.parse_args()
     do_initializations()
     try:

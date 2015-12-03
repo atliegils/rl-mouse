@@ -41,6 +41,46 @@ def sum_sum(names):
     print 'Eval score : MIN {0} || MAX {1} || AVG {2}'.format(min(magics), max(magics), sum(magics)/len(magics))
     print '_____________________________________________________'
 
+def summarize_ec(name):
+    print '========================'
+    print 'count {0} end summary:'.format(name)
+    deaths = 0
+    timeouts = 0
+    extra_steps = 0
+    ratios = []
+    accums = []
+    perfms = []
+    with open(name, 'r') as f:
+        text = f.read()
+        lines = text.splitlines()
+        for cur_step, line in enumerate(lines[-10:]): # last 10 rounds get evaluated
+            parts = map(float, line.split(',')) # score, deaths, timeout, accumulated, 0, local detahs, extra steps, ratio, performance
+            deaths += parts[1]
+            timeouts += parts[2]
+            accums.append(parts[3])
+            extra_steps += parts[6]
+            ratios.append(parts[7])
+            perfms.append(parts[8])
+
+    average_ratio = avg(ratios)
+    average_accum = avg(accums)
+    average_perfs = avg(perfms)
+    print 'Avarage accumulated reward: {0}'.format(average_accum)
+    print 'Average performance: {0}'.format(average_perfs)
+    print 'Average ratio: {0}'.format(average_ratio)
+    print 'Recent deaths: {0}'.format(deaths)
+    print 'Recent timeouts: {0}'.format(timeouts)
+    print 'Recent extra steps: {0}'.format(extra_steps)
+    magic = average_perfs - (average_ratio * 0.023 * deaths * (5 * timeouts))
+    print 'Evaluation score: {0}'.format(magic)
+    print '\t',
+#   if magic < 100 or timeouts > 100 or accumulated_reward < 0 or average_ratio < 0.3:
+    if magic <= 0.30:
+        print 'FAIL'
+    else:
+        print 'PASS'
+    return (average_accum, average_ratio, average_perfs, deaths, timeouts, extra_steps, magic)
+
 def summarize_e(name):
     print '========================'
     print '{0} summary:'.format(name)
