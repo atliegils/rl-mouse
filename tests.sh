@@ -1,8 +1,6 @@
 #!/bin/bash
 
-CMD="./evaluator.py -b"
 PLOT="./plotter.py -b"
-ARGS="-l -m 30000 --round_limit 1000 -cr 2 -tr 5 -hr 1 -b --test"
 CMD="./bootstrapper.py"
 ARGS="--count_evals"
 
@@ -33,34 +31,23 @@ run () {
 	shift
 	shift
 
+	OUT=${a}_${b}_${s}_$*
 
 	ARGS2="-g $b"
-    echo $CMD $ARGS $ARGS2 $a --max_count $s $*
-    $CMD $ARGS $ARGS2 $a --max_count $s $*
+    echo $CMD $ARGS $ARGS2 $a --max_count $s $* --outfile reval_solutions/$OUT.txt
+    $CMD $ARGS $ARGS2 $a --max_count $s $* --outfile $OUT
 }
-#run "solutions/sarsa" 12 250 --custom_actions "left,right,forward"
-#run "solutions/qlearn" 12 250 --custom_actions "left,right,forward"
-#run "solutions/meta_simple" 12 250 --custom_actions "left,right,forward"
-#run "solutions/meta_Q_simple" 12 250 --custom_actions "left,right,forward"
-#run "solutions/sarsa" 15 250 --custom_actions "left,right,forward"
-#run "solutions/qlearn" 15 250 --custom_actions "left,right,forward"
-#run "solutions/meta_simple" 15 250 --custom_actions "left,right,forward"
-#run "solutions/meta_Q_simple" 15 250 --custom_actions "left,right,forward"
-#run "solutions/sarsa" 10 250 --custom_actions "left,right,forward"
-#run "solutions/qlearn" 10 250 --custom_actions "left,right,forward"
-#run "solutions/meta_simple" 10 250 --custom_actions "left,right,forward"
-#run "solutions/meta_Q_simple" 10 250 --custom_actions "left,right,forward"
-#run "solutions/sarsa" 12 250 --custom_actions "left,right,forward,?"
-#run "solutions/qlearn" 12 250 --custom_actions "left,right,forward,?"
-#run "solutions/meta_simple" 12 250 --custom_actions "left,right,forward,?"
-#run "solutions/meta_Q_simple" 12 250 --custom_actions "left,right,forward,?"
 
-run "solutions/sarsa" 15 250 --custom_actions "left,right,forward,?"
-run "solutions/qlearn" 15 250 --custom_actions "left,right,forward,?"
-run "solutions/meta_simple" 15 250 --custom_actions "left,right,forward,?"
-run "solutions/meta_Q_simple" 15 250 --custom_actions "left,right,forward,?"
-run "solutions/sarsa" 10 250 --custom_actions "left,right,forward,?"
-run "solutions/qlearn" 10 250 --custom_actions "left,right,forward,?"
-run "solutions/meta_simple" 10 250 --custom_actions "left,right,forward,?"
-run "solutions/meta_Q_simple" 10 250 --custom_actions "left,right,forward,?"
+run "qlearn" 12 250
+run "meta_Q_simple" 12 250
+run "sarsa_norand" 12 250
+run "sarsa" 12 250
+run "meta_simple" 12 250
 
+run "omni_q" 15 250
+run "omni" 15 250
+run "qlearn" 15 250
+run "meta_Q_simple" 15 250
+run "sarsa_norand" 15 250
+run "sarsa" 15 250
+run "meta_simple" 15 250
