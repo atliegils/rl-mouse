@@ -49,32 +49,33 @@ def pong_eval(name):
         agent.learning = True
         exercise.train(agent)
     winning = 0
-    for x in xrange(args.training_epochs):
-        game_copy = copy.copy(original_game)
-        game_copy.do_render = False     # don't render training
-        agent.game = game_copy
-        # train the agent using the provided solution
-        agent.learning = True
-        exercise.train(agent)
-        agent.learner.dump_policy(str(x))
-        # clean up after training
-        agent.accumulated = 0   # reset accumulated rewards
-        agent.set_epsilon(0.0)  # turn off exploration
-        agent.game.reset()      # reset the game
-        agent.game = original_game # if the training modifies the game, it is fixed here
-        # evaluate the training results
-        agent.game.do_render = args.render
-        print 'evaluating'
-        file_name, wins, loss = evaluator.pong_evaluate(agent, runs=args.eval_games, name=target_filename)
-        if wins > loss * 10:
-            winning += 1
-            if winning > 10:
-                print 'solution succeeds'
-        else:
-            winning = max(0, winning - 1)
-        print 'W {0} | {1} L | Round: {2}'.format(wins, loss, x)
-    # print out a nice summary of how the evaluation went
-    print 'W {0} | {1} L'.format(wins, loss)
+    try:
+        for x in xrange(args.training_epochs):
+            game_copy = copy.copy(original_game)
+            game_copy.do_render = False     # don't render training
+            agent.game = game_copy
+            # train the agent using the provided solution
+            agent.learning = True
+            exercise.train(agent)
+    #       agent.learner.dump_policy(str(x))
+            # clean up after training
+            agent.accumulated = 0   # reset accumulated rewards
+            agent.set_epsilon(0.0)  # turn off exploration
+            agent.game.reset()      # reset the game
+            agent.game = original_game # if the training modifies the game, it is fixed here
+            # evaluate the training results
+            agent.game.do_render = args.render
+            print 'evaluating'
+            file_name, wins, loss = evaluator.pong_evaluate(agent, runs=args.eval_games, name=target_filename, max_count=1000)
+            if wins > loss * 10:
+                winning += 1
+                if winning > 10:
+                    print 'solution succeeds'
+            else:
+                winning = max(0, winning - 1)
+            print 'W {0} | {1} L | Round: {2}'.format(wins, loss, x)
+    except KeyboardInterrupt:
+        print '\rEARLY INTERRUPT!'
     return file_name
     
 

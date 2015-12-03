@@ -20,17 +20,17 @@ class Rectangle:
         return Rectangle(left, top, self.width, self.height)
 
     def inflate(self, dx, dy):
-        left = int(self.left + float(dx)/2)
-        top = int(self.top + float(dy)/2)
+        left = int(self.left - float(dx)/2)
+        top = int(self.top - float(dy)/2)
         width = int(self.width + float(dx)/2)
         height = int(self.height + float(dy)/2)
         return Rectangle(left, top, width, height)
 
     def contains(self, rect):
-        if rect.x <  self.x: return False
-        if rect.y <  self.y: return False
-        if rect.x + rect.width >  self.x + self.width: return False
-        if rect.y + rect.height >  self.y + self.height: return False
+        if rect.x < self.x: return False
+        if rect.y < self.y: return False
+        if rect.x + rect.width  > self.x + self.width: return False
+        if rect.y + rect.height > self.y + self.height: return False
         return True
 
 
@@ -48,7 +48,7 @@ class Rectangle:
             and self.y + self.height > rect.y
 
     def __repr__(self):
-        return '{0} {1} {2} {3}'.format(self.x, self.y, self.width, self.height)
+        return '({0}+{2}, {1}+{3})'.format(int(self.x), int(self.y), int(self.width), int(self.height))
 
 
 class Pong:
@@ -71,10 +71,12 @@ class Pong:
         self.paddles = [None, None]
         self.paddles[0] = self.Paddle('left', self.area)
         self.paddles[1] = self.Paddle('right', self.area)
+        self.difficulty = 1
         self.serve()
 
-    def reset(self):
-        self.scores = [0, 0]
+    def reset(self, soft=False):
+        if not soft:
+            self.scores = [0, 0]
         self.moved = False
         self.paddles = [None, None]
         self.paddles[0] = self.Paddle('left', self.area)
@@ -100,9 +102,9 @@ class Pong:
 
     # Returns the x/y coordinates of the ball and the y coordinate of the player's paddle
     def get_state(self):
-        y_self = self.paddles[0].rect.y
-        y_ball = self.ball.rect.y
-        x_ball = self.ball.rect.x
+        y_self = self.paddles[0].rect.y + self.paddles[0].rect.height / 2
+        y_ball = self.ball.rect.y + self.ball.rect.height / 2
+        x_ball = self.ball.rect.x + self.ball.rect.width / 2
         return y_self, y_ball, x_ball # Yp, Yb, Xb
 
     def update_frame(self):
@@ -123,11 +125,20 @@ class Pong:
             self.paddles[index].moveup()
         elif action == 'down':
             self.paddles[index].movedown()
+        elif action == 'auto':
+            self.move_auto(index)
 
     def move_auto(self, index):
         # simple non-learning ai
         y_self = self.paddles[index].rect.y + self.paddles[index].rect.height/2
         y_ball = self.ball.rect.y + self.ball.rect.height/2
+        if self.difficulty == 1:
+            if random.random() > 0.55:
+                self.move('stop')
+                return
+            elif random.random() < 0.45:
+                self.move(random.choice(['stop', 'up', 'down']))
+                return
         if y_ball == y_self:
             self.move('stop', index)
         elif y_ball < y_self:
@@ -163,27 +174,28 @@ class Pong:
             self.rect = rect
 #           self.area = pygame.display.get_surface().get_rect()
             self.area = area
-            self.last_collision = 0
+            self.last_collision = -1
 
         def update(self, paddles):
-            self.last_collision = 0
             newpos = self.calcnewpos(self.rect, self.vector)
             (angle, z) = self.vector
-            if not self.area.contains(newpos):
-                if newpos.y < self.area.y or newpos.y > self.area.y + self.area.height:
+            new_area = self.area.inflate(25,0)
+            new_area = self.area # patch above line away... for now
+#           print 'BALL:   {0}\nPADDLE: {1}\nPADDL2: {3} ; angle: {2} '.format(self.rect, paddles[0].rect, degrees(angle) , paddles[1].rect) # debug only
+            if not new_area.contains(newpos):
+                self.last_collision = -1
+                if newpos.y < self.area.y or newpos.y + newpos.height > self.area.y + self.area.height:
                     angle = -angle
-                elif self.rect.x + self.rect.width < self.area.x:
+                elif self.rect.x + self.rect.width < new_area.x:
                     return 2
-                elif self.rect.x > self.area.x + self.area.width:
+                elif self.rect.x > new_area.x + new_area.width:
                     return 1
-            else:
-                for idx, paddle in enumerate(paddles):
-                    if self.rect.colliderect(paddle.rect):
-                        if idx == 1 and (angle > math.pi * 1.5 or angle < math.pi/2) \
-                        or idx == 0 and (angle < math.pi * 1.5 and angle > math.pi/2):
-                            angle = math.pi - angle
-                            angle += random.choice([random.random() / 0.8, -random.random() / 0.8])
-                            self.last_collision = idx + 1
+            for idx, paddle in enumerate(paddles):
+                if self.rect.colliderect(paddle.rect) and idx != self.last_collision:
+                    angle = (math.pi - angle)
+                    angle = angle + random.choice([random.random() / 0.9, -random.random() / 0.9])
+                    newpos = self.calcnewpos(self.rect, (angle, z))
+                    self.last_collision = idx
             self.rect = newpos
             self.vector = (angle, z)
             return 0
@@ -229,4 +241,12 @@ class Pong:
 
 if __name__ == '__main__':
     p = Pong()
-    p.play()
+    p.difficulty = 123
+    winner = 0
+    try:
+        for x in xrange(100):
+            while not winner:
+                p.play('auto')
+    except KeyboardInterrupt:
+        print 'exiting...'
+

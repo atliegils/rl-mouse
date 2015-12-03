@@ -202,7 +202,7 @@ def generate_configurations():
                         col.append(config)
     return col
 
-def pong_evaluate(player, runs=200, name='pong_eval'):
+def pong_evaluate(player, runs=200, name='pong_eval', max_count=3000):
     player.game.suppressed = True
     player.learning = False
     outfile = name + '.txt'
@@ -212,14 +212,18 @@ def pong_evaluate(player, runs=200, name='pong_eval'):
     for _ in xrange(runs):
         winner = 0
         count = 0
-        while not winner and count <= 1000:
+        while not winner and count <= max_count:
+            count = count + 1
             winner = player.perform()
             if winner == 1:
                 wins += 1
             elif winner == 2:
                 loss += 1   
-            if winner or count == 1000:
+            if winner or count == max_count:
                 data.append(winner)
+#               if winner: print winner
+                if not winner: print 'count'
+        player.game.reset(soft=True)
     dirname = os.path.dirname(outfile)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
