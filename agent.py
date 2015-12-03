@@ -25,7 +25,7 @@ class BaseAgent(object):
 
 # CAT, CHEESE AND TRAP AGENTS
 class Agent(BaseAgent):
-    def __init__(self, game, actions, epsilon=0.1, fov=3, learner_class=SARSA):
+    def __init__(self, game, actions, epsilon=0.1, fov=2, learner_class=SARSA):
         self.game = game
         self.score = 0
         self.adjust_rewards( 1,  1,  0 )
@@ -172,7 +172,7 @@ class Agent(BaseAgent):
         self.verbose = verbose
         state_now = self.get_fov(self.fov)
         if explore:
-            explo = self.get_fov(self.fov*3)
+            explo = self.get_fov(self.fov*2)
             state_now = state_now + (explo[0] + explo[1],)
         if last_action:
             state_now = state_now + (self.learner.current_action,)
@@ -211,53 +211,91 @@ class OmniscientAgent(Agent):
         self.dephased = False
         self.fov = -1
 
-    def get_fov(self, _): # TODO: check if `_` is allowed here
-        # We have a NxN grid, but the mouse in at (x, y)
-        # We must normalize so that x,y is always constant,
-        # to ensure that the agent's _perspective_ doesn't change
-        # we do this by letting x:=y:=0 for any position
-        # we also rotate so that the mouse is always facing 'forward'
-        x, y = self.game.mouse
-        orient = self.game.direction
-        # start by building it normally
-        grid = []       # 'rows'
-        for y in xrange(self.game._ch):
-            row = []    # single row in matrix
-            for x in xrange(self.game._cw):
-                row.append(self.item_at(x,y))
-            grid.append(row)
-        # now align it (transpose by mouse coordinates)
-        def transpose(matrix, x, y): # <-- HERE IS A FUNCTION, USE IT
-            m_start = matrix[y:]
-            m_end = matrix[:y]
-            the_matrix = m_end.extend(m_start) # transposed 'down'
-            matrix = []
-            for row in the_matrix:
-                row_start = row[x:]
-                row_end = row[:x]
-                row = row_end.extend(row_start) # transposed 'sideways'
-                matrix.append(row)
-            return matrix
-        grid = transpose(grid, x, y)
-        # now rotate the matrix as many times as necessary
-        num_rotations = 0
-        transposition = 0,0
-        if orient == 'right':
-            num_rotations = 1
-            transposition = 0, self.game._cw
-        elif orient == 'down':
-            num_rotations = 2
-            transposition = self.game._ch, 0
-        elif orient == 'left':
-            num_rotations = 3
-            transposition = self.game._ch, self.game._cw
-        for rot in xrange(num_rotations):
-            grid = zip(*grid[::-1])
-        # Now we have a problem -- we've rotated by some degrees so 
-        # the origin (0,0) may have moved. We transpose again!
-        grid = transpose(grid, *transposition)
-        return grid
+    def perform(self, explore=False, last_action=False, verbose=0):
+#       return Agent.perform(explore, last_action, verbose)
+        return super(OmniscientAgent, self).perform(explore, last_action, verbose)
 
+    def modify_state(self, state):
+        return state # fov
+        # example usage of this method:
+        def convert(item): # function to convert items into a standardized format
+            if not item: return '0'
+            return item[0]
+        state_string = ''.join([convert(item) for sublist in state for item in sublist])
+        raw_input(state_string)
+        return state_string
+
+    # Just pretend to change the game, then return dx,dy pairs for cheese and trap
+    def get_fov(self, *args):
+        m_loc = self.game.mouse # get mouse location
+        # get cheese relative to mouse
+        cheese = (self.game.cheese[0] - m_loc[0] + self.game._cw) % self.game._cw, (self.game.cheese[1] - m_loc[1] + self.game._ch) % self.game._ch
+        # get trap relative to mouse
+        trap = (self.game.trap[0] - m_loc[0] + self.game._cw) % self.game._cw, (self.game.trap[1] - m_loc[1] + self.game._ch) % self.game._ch
+        # now rotate cheese and trap around the origin depending on direction
+        def rotate(item, angle):
+            x,y = item
+            xp = x * math.cos(math.radians(angle)) - y * math.sin(math.radians(angle))
+            yp = x * math.sin(math.radians(angle)) + y * math.cos(math.radians(angle))
+            return int(xp), int(yp)
+        direction = self.game.direction
+        if direction == 'up':
+            angle = 0.0
+        elif direction == 'right':
+            angle = 90.0
+        elif direction == 'down':
+            angle = 180.0
+        elif direction == 'left':
+            angle = 270.0
+        return rotate(cheese, angle), rotate(trap, angle)
+
+# Like a regular agent, but instead of seeing a cone, it sees a square around it
+# uses omniscient agent state space logic
+class RadiusAgent(Agent):
+    def __init__(self, game, actions, epsilon, learner_class=SARSA, fov=2):
+        self.game = game
+        self.score = 0
+        self.adjust_rewards( 1,  1,  0 )
+        self.reward_scaling([1, -1, -1])
+        self.accumulated = 0
+        self.learner_class = learner_class
+        self.learner = learner_class(actions, epsilon)
+        self.learning = True
+        self.dephased = False
+        self.fov = fov # here fov = radius
+
+    def get_fov(self, radius=3):
+        m_loc = self.game.mouse
+        cheese = (self.game.cheese[0] - m_loc[0] + self.game._cw) % self.game._cw, (self.game.cheese[1] - m_loc[1] + self.game._ch) % self.game._ch
+        # get trap relative to mouse
+        trap = (self.game.trap[0] - m_loc[0] + self.game._cw) % self.game._cw, (self.game.trap[1] - m_loc[1] + self.game._ch) % self.game._ch
+        # now rotate cheese and trap around the origin depending on direction
+        # also remove things that are out of range
+        def rotate_and_mask(item, angle):
+            x,y = item
+            xp = x * math.cos(math.radians(angle)) - y * math.sin(math.radians(angle))
+            yp = x * math.sin(math.radians(angle)) + y * math.cos(math.radians(angle))
+#           print '{0}R, xy {1} {2}; dxdy {3} {4}'.format(radius, x, y, xp, yp)
+            # if the item is out of our view, we don't see it
+            if abs(xp) > radius or abs(yp) > radius:
+                return 0,0
+            return int(xp), int(yp)
+        direction = self.game.direction
+        if direction == 'up':
+            angle = 0.0
+        elif direction == 'right':
+            angle = 90.0
+        elif direction == 'down':
+            angle = 180.0
+        elif direction == 'left':
+            angle = 270.0
+        # return the location of visible items, or (0,0) for any item that is not visible
+        return rotate_and_mask(cheese, angle), rotate_and_mask(trap, angle)
+
+        def modify_state(self, state):
+            return state
+
+# example utility class (extend this for debugging!)
 class TraceAgent(Agent):
     def decide(self, learner):
         action = learner.select()
@@ -281,7 +319,7 @@ class WrapperAgent(Agent):
         self.verbose = verbose
         state_now = self.get_fov(self.fov)
         if explore:
-            explo = self.get_fov(self.fov*3)
+            explo = self.get_fov(self.fov*2) # changed from 3 to 2
             state_now = state_now + (explo[0] + explo[1],)
         if last_action:
             state_now = state_now + (self.learner.current_action,)
@@ -295,7 +333,7 @@ class WrapperAgent(Agent):
 
 # Agent that tracks history
 class HistoricalAgent(Agent):
-    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=3, learner_class=SARSA):
+    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=2, learner_class=SARSA):
         self.learners = []
         self.learner_class = learner_class
         self.game = game
@@ -406,7 +444,7 @@ class HistoricalAgent(Agent):
                     print 'S{0} rewarded with {1}.'.format(s, value)
 
 class MetaAgent(Agent):
-    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=3, learner_class=SARSA):
+    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=2, learner_class=SARSA):
         self.game = game
         self.score = 0
         self.accumulated = 0
@@ -439,7 +477,7 @@ class MetaAgent(Agent):
         # active state
         state_left = self.get_fov(self.fov)
         # exploration state
-        state_right = self.get_fov(self.fov*3)
+        state_right = self.get_fov(self.fov*2) # changed to 2
         if not self.game.easy: # if easy, then exploration is just better range...
             state_right = state_right[0] + state_right[1] # don't distinguish between items
         if last_action:
@@ -460,7 +498,7 @@ class MetaAgent(Agent):
         self.game.play(final_action)
         reward = self.check_reward()
         value = self.calc_reward(reward)
-        self.next_states = (self.get_fov(self.fov), self.get_fov(self.fov*3))
+        self.next_states = (self.get_fov(self.fov), self.get_fov(self.fov*2))
         self.reward(value)
         return reward
 
@@ -498,7 +536,7 @@ class CheeseMeta(MetaAgent):
         # active state
         state_left = self.get_fov(self.fov)
         # exploration state
-        state_right = self.get_fov(self.fov*3)
+        state_right = self.get_fov(self.fov*2)
         if not self.game.easy: # if easy, then exploration is just better range...
             state_right = state_right[0] + state_right[1] # don't distinguish between items
         if last_action:
