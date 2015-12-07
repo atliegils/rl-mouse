@@ -1,20 +1,22 @@
-# Instructions for use
+# Toolkit for Evaluating Agents and Learners
 
-## Exercises
+## Installation
 
-Currently there is only `exercise.py` which serves as a template for solutions.
-_In progress: exercises where specific learners are better than others_
- 
+TEAL requires Python 2.7+. Clone or download the git repository.
+
 ## Students (crafting a solution)
 
-The solution to an exercise consists of two methods that need to be implemented.
-These are the `get_agent` and `train` methods.
+The solution to an exercise consists of three methods that need to be implemented.
+These are the `get_agent`, `train` and `reward_profile` methods.
 
 ### `get_agent`
 The `get_agent` method takes a `game` as a parameter and should return an `Agent` (any subclass of `Agent` is fine). The returned `Agent` instance should be configured for the provided `game`, and will be passed as a parameter into the `train` method.
 
 ### `train`
 The `train` method takes an `agent` as a parameter and performs any necessary actions to train the agent to solve the given task. Once training is completed, exploration is turned off.
+
+### `reward_profile`
+The `reward_profile` method takes an `agent` as a parameter and adjusts the reward profile of that agent, generally with `adjust_rewards(args)`.
 
 ## Instructors (evaluating a solution)
 It's important to note that due to the stochastic policies of learners, a solution can yield different evaluation results between runs.
@@ -110,23 +112,9 @@ The world loops around itself.
 
 If the difficulty is set to 0, there is no trap. At 1, the trap exists but is immobile. At 2, the trap randomly moves towards the player (acts like a cat).
 
+A basic implementation of Pong is also included.
 
 # Extending the provided agents for other games
 
-The provided agents already do a lot of the heavy lifting in a generalized context. `Agent:get_fov(fov)` might need to be replaced, along with the `Agent:decide(learner)` method. The `decide` method is responsible for updating the selected action in non-chosen learners and the `get_fov` method generates a tuple based on the game state.
-
-## Case study: Mouse game (difficulty 0)
-
-_This section: Revise_
-
-Assume the goal is to create a simple SARSA agent that plays the game at difficulty 0.
-
-`agent.py` contains the agent code. Most of the methods in the `Agent` class are helper methods to represent and mutate game internals with respect to what the agent should see. `get_fov()` is the method that creates the current state in the format for the learner (the provided implementation creates a cone-like field of view). The learners should be able to learn from any state space, but the design of the agent decides what state space the learner attempts to learn from.
-
-Instead of building a field of view, we could pass all of the game's internals, but this creates a very large state space. 
-The `get_fov()` method calls `create_cone()`, which returns a 2-tuple (cheese, traps). At difficulty 0, there are no traps, so the 2-tuple `(cheese, traps)` will simplify to `(cheese, 0)`, so the code returns only `cheese`.
-
-The `perform()` method is the _meat_ of the agent. This is where the state is fetched (with `get_fov()`) and passed on to the learner. The learner is then activated by selecting an action from the learner and playing it in the game. Once the action has been performed, the agent should check if the game changed for better or worse. In the provided agent, this happens in the `check_reward()` method which returns whether or not the score increased, decreased, or neither as an integer between 1 and -1. The agent can then use that value to determine whether or not to administer a reward to the learner.
-
-The agent code must also handle the decision making at the meta level -- i.e. it must implement some logic to decide which learner makes the final decision (and the traversal down the tree to that learner).
+The provided agents already do a lot of the heavy lifting in a generalized context. `Agent:get_fov(fov)` might need to be replaced, along with the `Agent:decide(learner)` method. The `decide` method is responsible for updating the selected action in non-chosen learners and the `get_fov` method generates a tuple based on the game state. See `agent.py`.
 
