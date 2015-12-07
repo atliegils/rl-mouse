@@ -5,8 +5,7 @@ import evaluator
 import summarizer
 import os, sys, traceback
 from game import Game
-from plotter import evaluation_plot, compare_evals, counter_plot
-from  functools import partial
+from functools import partial
 
 def comparison():
     e1 = evaluate(args.solution_name)
@@ -225,9 +224,12 @@ if __name__ == '__main__':
     parser.add_argument('--multi', type=int, metavar='N', help='number of evaluations to make (single evaluations only)')
     parser.add_argument('--seed', type=int, metavar='N', default=0, help='random seed (0 means system time)')
     parser.add_argument('--render', action='store_true', help='render the evaluation (not recommended, greatly affects performance)')
+    parser.add_argument('--no_plot', action='store_true', help='render the evaluation (not recommended, greatly affects performance)')
     args = parser.parse_args()
     do_initializations()
     try:
+        if not args.no_plot:
+            from plotter import evaluation_plot, compare_evals, counter_plot
         if args.compare_to:
             comparison()
         else:
