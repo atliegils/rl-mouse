@@ -2,7 +2,7 @@
 
 ## Installation
 
-TEAL requires Python 2.7+. Clone or download the git repository.
+TEAL requires Python 2.7+. Clone or download the git repository. In order to use the plotter, `bokeh` needs to be installed. The plotter can be disabled with the `--no_plot` switch.
 
 ## Students (crafting a solution)
 
@@ -18,43 +18,22 @@ The `train` method takes an `agent` as a parameter and performs any necessary ac
 ### `reward_profile`
 The `reward_profile` method takes an `agent` as a parameter and adjusts the reward profile of that agent, generally with `adjust_rewards(args)`.
 
-## Instructors (evaluating a solution)
+## Evaluating solutions
 It's important to note that due to the stochastic policies of learners, a solution can yield different evaluation results between runs.
 
-### The evaluation bootstrapper
+### Evaluating learning rate
+In order to evaluate how fast a solution learns how to solve a given task environment, use the `--count_evals` switch. This will train the agent and then evaluate it until end-conditions are met (max_count runs or early finish).
 
-#### Variables
+`usage: python2 bootstrapper.py [solution_name] --count_evals [--max_count N] [--allow_early_finish] ...`
 
-##### Independent
-- Grid size
-- Field of view
-- Alpha, Gamma (learning rate & discount factor)
-- Reward profile
-
-##### Dependent
-- Learning time
-- Target steps (dependent on grid size)
-- Extra steps (dependent on agent)
-- Other evaluation metrics (deaths, timeouts, performance...)
-
-#### Arguments (for the evaluation software)
-- Output file name
-- Dephase (first train it to learn the opposite of the task)
-- Solution (mandatory)
-- Comparison solution
-- Grid size
-- Field of view base size
-- Gamma (discount factor)
-- Reward profile
-
-### Evaluating a single solution
+### Evaluating a single solution (obsolete)
 To evaluate a single solution, run `bootstrapper.py` with the solution name as an argument and any optional arguments to configure the game. Usage instructions follow.
 
-`usage: bootstrapper.py [solution_name] [-g GRID_SIZE] [-f FOV], -g [DISCOUNT_FACTOR]`
+`usage: python2 bootstrapper.py [solution_name] [-g GRID_SIZE] [-f FOV] ...`
 
-### Comparing two solutions
+### Comparing two solutions (obsolete)
 Two solutions can be evaluated and plotted on the same chart for comparison. Usage instructions follow.
-`usage: bootstrapper.py [solution_name] [-c OTHER_SOLUTION] [-g GRID_SIZE] [-f FOV], -g [DISCOUNT_FACTOR]`
+`usage: python2 bootstrapper.py [solution_name] [-c OTHER_SOLUTION] [-g GRID_SIZE] [-f FOV] ...`
                        
 
 # Documentation
@@ -117,4 +96,31 @@ A basic implementation of Pong is also included.
 # Extending the provided agents for other games
 
 The provided agents already do a lot of the heavy lifting in a generalized context. `Agent:get_fov(fov)` might need to be replaced, along with the `Agent:decide(learner)` method. The `decide` method is responsible for updating the selected action in non-chosen learners and the `get_fov` method generates a tuple based on the game state. See `agent.py`.
+
+# Appendix
+### The evaluation bootstrapper
+
+#### Variables
+
+##### Independent
+- Grid size
+- Field of view
+- Alpha, Gamma (learning rate & discount factor)
+- Reward profile
+
+##### Dependent
+- Learning time
+- Target steps (dependent on grid size)
+- Extra steps (dependent on agent)
+- Other evaluation metrics (deaths, timeouts, performance...)
+
+#### Arguments (for the evaluation software)
+- Output file name
+- Dephase (first train it to learn the opposite of the task)
+- Solution (mandatory)
+- Comparison solution
+- Grid size
+- Field of view base size
+- Gamma (discount factor)
+- Reward profile
 

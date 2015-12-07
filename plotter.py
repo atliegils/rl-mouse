@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 import argparse
 import operator
-import numpy as np
+#import numpy as np
 from bokeh.plotting import figure, output_file, save, show
 from bokeh.models import LinearAxis, Range1d
 
@@ -180,13 +180,13 @@ def bench_plot():
         y = get_y_b(fn)
         deaths = [ (0 if pp == 0 else pp+add) for pp in y[1] ]
         x = range(len(y[0]))
-        zp = np.poly1d(np.polyfit(x, y[2], 1))
-        z = list([zp(aa) for aa in x])
+#       zp = np.poly1d(np.polyfit(x, y[2], 1))
+#       z = list([zp(aa) for aa in x])
         p.line(x, y[4], line_width=1, line_color=color[i][2], line_alpha=0.45, y_range_name='reward2')
         p.line(x, deaths, line_width=1, line_color=color[i][0], y_range_name='deaths')
         p.line(x, y[2], line_width=1, line_color=color[i][1])
         p.line(x, y[3], line_width=2, line_color=color[i][2], y_range_name='reward')
-        p.line(x, z, line_width=2, line_color=color[i][0])
+#       p.line(x, z, line_width=2, line_color=color[i][0])
     p.y_range = Range1d(0, 1.1)
     save(p)
 
