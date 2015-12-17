@@ -105,7 +105,7 @@ def counter_plot(fn, display=True):
     p.circle(x, y[2], color='black', alpha=0.8, size=2)   # timeouts 
     p.triangle(x, y[7], color='black', alpha=1, size=5, y_range_name='ratio')    # ratio
     p.triangle(x, y[8], color='teal', alpha=1, size=5, y_range_name='ratio')    # performance
-    p.line(x, y[3], color='blue', size=3, y_range_name='reward')    # accumul. reward
+    p.line(x, y[3], color='blue', line_width=1, y_range_name='reward')    # accumul. reward
     p.y_range = Range1d(0, max(max(y[1]),max(y[2]))*1.10)
 
     if display:
