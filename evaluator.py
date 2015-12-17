@@ -272,7 +272,7 @@ def random_evaluate(player, runs=200, round_limit=300, name='rand_eval'):
     # create data point
     ratio = float(target_steps) / (extra_steps + target_steps)
     expected_steps = expected_distance(target_steps)
-    performance = expected_steps / (expected_steps + (extra_steps - target_steps))
+    performance = expected_steps / (expected_steps + extra_steps)
     data_point = (player.game.score, deaths, timeouts, player.accumulated, 0, local_deaths, extra_steps, ratio, performance)
     # save data point
     data.append(data_point)
