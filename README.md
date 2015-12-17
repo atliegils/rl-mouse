@@ -2,7 +2,7 @@
 
 ## Installation
 
-TEAL requires Python 2.7+. Clone or download the git repository. In order to use the plotter, `bokeh` needs to be installed. The plotter can be disabled with the `--no_plot` switch.
+TEAL requires Python 2.7+. Clone or download the git repository. In order to use the plotter, `bokeh` needs to be installed. The plotter can be disabled with the `--no_plot` switch (useful if you are unable to install `bokeh`). 
 
 ## Students (crafting a solution)
 
@@ -10,13 +10,14 @@ The solution to an exercise consists of three methods that need to be implemente
 These are the `get_agent`, `train` and `reward_profile` methods.
 
 ### `get_agent`
-The `get_agent` method takes a `game` as a parameter and should return an `Agent` (any subclass of `Agent` is fine). The returned `Agent` instance should be configured for the provided `game`, and will be passed as a parameter into the `train` method.
+The `get_agent` method takes a `Game` as a parameter and should return an `Agent` (any subclass of `Agent` is fine). The returned `Agent` instance should be configured for the provided `Game`, and will be passed as a parameter into the `train` method.
 
 ### `train`
 The `train` method takes an `agent` as a parameter and performs any necessary actions to train the agent to solve the given task. Once training is completed, exploration is turned off.
 
 ### `reward_profile`
 The `reward_profile` method takes an `agent` as a parameter and adjusts the reward profile of that agent, generally with `adjust_rewards(args)`.
+The reward profile is scaled by `[1, -1, -1]` during evaluations.
 
 ## Evaluating solutions
 It's important to note that due to the stochastic policies of learners, a solution can yield different evaluation results between runs.
@@ -24,28 +25,31 @@ It's important to note that due to the stochastic policies of learners, a soluti
 ### Evaluating learning rate
 In order to evaluate how fast a solution learns how to solve a given task environment, use the `--count_evals` switch. This will train the agent and then evaluate it until end-conditions are met (max_count runs or early finish).
 
-`usage: python2 bootstrapper.py [solution_name] --count_evals [--max_count N] [--allow_early_finish] ...`
+`usage: python2 bootstrapper.py <solution_name> --count_evals [--max_count N] [--allow_early_finish] ...`
 
 ### Evaluating a single solution (obsolete)
 To evaluate a single solution, run `bootstrapper.py` with the solution name as an argument and any optional arguments to configure the game. Usage instructions follow.
 
-`usage: python2 bootstrapper.py [solution_name] [-g GRID_SIZE] [-f FOV] ...`
+`usage: python2 bootstrapper.py <solution_name> [-g GRID_SIZE] [-f FOV] ...`
 
 ### Comparing two solutions (obsolete)
 Two solutions can be evaluated and plotted on the same chart for comparison. Usage instructions follow.
-`usage: python2 bootstrapper.py [solution_name] [-c OTHER_SOLUTION] [-g GRID_SIZE] [-f FOV] ...`
+`usage: python2 bootstrapper.py <solution_name> [-c OTHER_SOLUTION] [-g GRID_SIZE] [-f FOV] ...`
                        
 
 # Documentation
 Information about the reinforcement learners and the processes related to getting them to do things can be found below.
 
 # Learners
-`learners.py` contains four learners. The first is the `BaseLearner` which contains the core functionality of a learner.
+`learners.py` contains five learners. The first is the `BaseLearner` which contains the core functionality of a learner.
 The learners are the building blocks of game-playing agents.
 
 ## QLearn and SARSA 
 `QLearn` and `SARSA` are separate implementations of learners. 
 `SARSA` assumes that exploration remains on whereas `QLearn` optimizes for offline us (exploration turned off after training). 
+
+### QPLearn
+This is a QLearning agent that always selects based on the probability of each action -- it's therefore not guaranteed to follow its own policy optimally. It uses a simple weighted-selection.
 
 ## HistoryManager
 `learners.py` provides a learner that has a memory, called `HistoryManager`.
