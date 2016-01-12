@@ -23,9 +23,9 @@ The reward profile is scaled by `[1, -1, -1]` during evaluations.
 It's important to note that due to the stochastic policies of learners, a solution can yield different evaluation results between runs.
 
 ### Evaluating learning rate
-In order to evaluate how fast a solution learns how to solve a given task environment, use the `--count_evals` switch. This will train the agent and then evaluate it until end-conditions are met (max_count runs or early finish).
+In order to evaluate how fast a solution learns how to solve a given task environment, use the `--count_epochs` switch. This will train the agent and then evaluate it until end-conditions are met (max_epochs runs or early finish).
 
-`usage: python2 bootstrapper.py <solution_name> --count_evals [--max_count N] [--allow_early_finish] ...`
+`usage: python2 bootstrapper.py <solution_name> --count_epochs [--max_epochs N] [--allow_early_finish] ...`
 
 ### Evaluating a single solution (obsolete)
 To evaluate a single solution, run `bootstrapper.py` with the solution name as an argument and any optional arguments to configure the game. Usage instructions follow.

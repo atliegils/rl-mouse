@@ -8,7 +8,6 @@ class BaseAgent(object):
         self.game = game
         self.score = 0
         self.accumulated = 0
-#       self.fov = fov # TODO: test if this is needed
         self.learner_class = learner_class
         self.learner = learner_class(actions, epsilon)
         self.learning = True
@@ -21,6 +20,12 @@ class BaseAgent(object):
 
     def decide(self, learner):
         return learner.select()
+
+    def set_state(self, state):
+        self.state = state
+
+    def modify_state(self, state):
+        return state
 
 
 # CAT, CHEESE AND TRAP AGENTS
