@@ -7,7 +7,7 @@ TEAL requires Python 2.7+. Clone or download the git repository. In order to use
 ## Students (crafting a solution)
 
 The solution to an exercise consists of three methods that need to be implemented.
-These are the `get_agent`, `train` and `reward_profile` methods.
+These are the `get_agent`, `train` and `reward_profile` methods. See solutions/example.py.
 
 ### `get_agent`
 The `get_agent` method takes a `Game` as a parameter and should return an `Agent` (any subclass of `Agent` is fine). The returned `Agent` instance should be configured for the provided `Game`, and will be passed as a parameter into the `train` method.
@@ -46,7 +46,7 @@ The learners are the building blocks of game-playing agents.
 
 ## QLearn and SARSA 
 `QLearn` and `SARSA` are separate implementations of learners. 
-`SARSA` assumes that exploration remains on whereas `QLearn` optimizes for offline us (exploration turned off after training). 
+`SARSA` assumes that exploration remains on whereas `QLearn` optimizes for offline use (exploration turned off after training). 
 
 ### QPLearn
 This is a QLearning agent that always selects based on the probability of each action -- it's therefore not guaranteed to follow its own policy optimally. It uses a simple weighted-selection.
