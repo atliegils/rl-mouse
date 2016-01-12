@@ -241,8 +241,6 @@ def random_evaluate(player, runs=200, round_limit=300, name='rand_eval'):
     player.game.suppressed = True
     player.learning = False
     outfile = name + '.txt'
-    local_length = 10 * round_limit
-    current_step = 0
     timeouts     = 0
     deaths       = 0
     extra_steps  = 0 # NOTE: Special snowflake, see how used in evaluate

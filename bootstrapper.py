@@ -37,23 +37,27 @@ def fetch_agent(exercise, game):
     load_reward_profile(agent)
     return agent
 
-def evaluate(name, no_initial_training=False):
+def evaluate(name, initial_training=True):
     # import the solution name into the global namespace as 'exercise'
     exercise = __import__(convert(name))
     name = convert(name)
+
     # game and agent setup code
     game = Game(do_render=args.render)
     game.set_size(args.grid_size, args.grid_size)
     original_game = copy.copy(game)
+
     # fetch the agent from the provided solution
     agent = fetch_agent(exercise, game)
+
     file_name_add = ''
-    if not no_initial_training:
+    if initial_training:
         if args.dephase:
             agent.dephase = True
         exercise.train(agent)
     else: 
         file_name_add = 'no_train_'
+
     # clean up after training
     agent.reward_scaling([1, -1, -1])
     agent.accumulated = 0   # reset accumulated rewards
@@ -63,10 +67,11 @@ def evaluate(name, no_initial_training=False):
     agent.fov  = args.fov
     agent.game = original_game # if the training modifies the game, it is fixed here
 #   load_reward_profile(agent)
-    exercise.reward_profile(agent)
+
     if args.dephase:
         agent.dephase = False
         exercise.train(agent)
+
     # evaluate the training results
     folder = 'eval_solutions'
     file_name = evaluator.evaluate(agent, name=os.path.join(folder, file_name_add+name))
@@ -136,8 +141,8 @@ def count_epochs(name):
     #       agent.learner.dump_policy('count_{0}'.format(x))
             with open(file_name, 'r') as fh:
                 lines = fh.read().splitlines()
-                if float(lines[-1].split(',')[8]) >= 1:
-                    if winning >= 9:
+                if float(lines[-1].split(',')[8]) >= 1: # performance is not worse than expected (derived from best SARSA agent)
+                    if winning >= 9: # tests if we "won" 10+(N-10)/2 times over the last N epochs
 #                       print 'this one is winning'
                         if args.allow_early_finish:
                             break
@@ -152,37 +157,36 @@ def count_epochs(name):
     summarizer.summarize_ec(file_name)
     return file_name
 
+def dephase():
+    file_name = evaluate(args.solution_name)
+    file_name2 = evaluate(args.solution_name, initial_training=False)
+    compare_evals(file_name, file_name2)
 
 def main():
-    if args.dephase:
-        file_name = evaluate(args.solution_name)
-        file_name2 = evaluate(args.solution_name, no_initial_training=True)
-        compare_evals(file_name, file_name2)
-    else:
-        num_iters = 1 if not args.multi else args.multi
-        show = False if args.multi else True
-        evals = []
-        for iteration_number in range(num_iters):
-            if args.outfile and os.path.exists(args.outfile): # what if args.multi?
-                raise OSError('The destination file already exists, move it or pick another name.')
-            if args.count_epochs:
-                file_name = count_epochs(args.solution_name)
-            else:
-                file_name = evaluate(args.solution_name)
-            if args.outfile or args.multi:
-                outname = file_name if not args.outfile else args.outfile
-                if args.multi:
-                    outname += str(iteration_number)
-                os.rename(file_name, outname)
-                file_name = outname
-            evals.append(file_name)
+    num_iters = args.multi or 1
+    show = not args.multi
+    evals = []
+    for iteration_number in range(num_iters):
+        if args.outfile and os.path.exists(args.outfile): # what if args.multi?
+            raise OSError('The destination file already exists, move it or pick another name.')
+        if args.count_epochs:
+            file_name = count_epochs(args.solution_name)
+        else:
+            file_name = evaluate(args.solution_name)
+        if args.outfile or args.multi:
+            outname = args.outfile or file_name
+            if args.multi:
+                outname += str(iteration_number)
+            os.rename(file_name, outname)
+            file_name = outname
+        evals.append(file_name)
 
-            if args.count_epochs:
-                counter_plot(file_name, display=show)
-            else:
-                evaluation_plot(file_name, display=show)
-        if args.multi:
-            summarizer.sum_sum(evals)           
+        if args.count_epochs:
+            counter_plot(file_name, display=show)
+        else:
+            evaluation_plot(file_name, display=show)
+    if args.multi:
+        summarizer.sum_sum(evals)
 
 def setting_configuration():
     config_lines = []
@@ -193,6 +197,8 @@ def setting_configuration():
     return config_name, '\n'.join(config_lines)+'\n'
 
 def do_initializations():
+    # adds solutions dir to the path and seeds the random number generator
+
     sys.path.insert(0, 'solutions') # to avoid needing an __init__.py in the 'solutions' directory
     if not args.seed: # do as random.py source code to generate a random seed
         try:
@@ -217,14 +223,14 @@ if __name__ == '__main__':
     parser.add_argument('--custom_rewards', metavar='CHEESE,TRAP,HUNGER', help='reward profile in the format "c,t,h" (without quotes)')
     parser.add_argument('--dephase', action='store_true', help=u'swap reward scalars (180\N{DEGREE SIGN} out of phase)')
     parser.add_argument('--count_epochs', action='store_true', help='run random evaluations')
-    parser.add_argument('--max_epochs', type=int, metavar='MAX', default=100, help='maximum number of steps to count to during count evaluations')
+    parser.add_argument('--max_epochs', type=int, metavar='MAX', default=100, help='maximum number of epochs to count to during count evaluations')
     parser.add_argument('--allow_early_finish', action="store_true", help='allow the count to end early if the solution is good')
     parser.add_argument('--custom_training', type=int, metavar='STEPS', help='custom number of training steps per session (training only `performs` on the agent)')
     parser.add_argument('--custom_actions', type=lambda s: [item.strip() for item in s.split(',')], metavar='"left,right,forward,?",...', help='Replace solution actions with custom actions')
     parser.add_argument('--multi', type=int, metavar='N', help='number of evaluations to make (single evaluations only)')
     parser.add_argument('--seed', type=int, metavar='N', default=0, help='random seed (0 means system time)')
     parser.add_argument('--render', action='store_true', help='render the evaluation (not recommended, greatly affects performance)')
-    parser.add_argument('--no_plot', action='store_true', help='render the evaluation (not recommended, greatly affects performance)')
+    parser.add_argument('--no_plot', action='store_true', help='disable plotting')
     args = parser.parse_args()
     do_initializations()
     try:
@@ -232,6 +238,8 @@ if __name__ == '__main__':
             from plotter import evaluation_plot, compare_evals, counter_plot
         if args.compare_to:
             comparison()
+        elif args.dephase:
+            dephase()
         else:
             main()
     except SystemExit:

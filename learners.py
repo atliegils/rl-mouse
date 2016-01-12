@@ -52,9 +52,9 @@ class BaseLearner:
         row = self.q.get(state, self.get_default_row())
         return row.get(action, 0.0)
 
-    # internal method for updating the Q-matrix (dictionariy is this implementation)
+    # internal method for updating the Q-matrix (dictionary is this implementation)
     def learnQ(self, state, action, reward, maxqnew):
-        if state == None:
+        if state is None:
             return # don't learn anything yet
         oldv = self.getQ(state, action)
         row = self.q.get(state, self.get_default_row())
@@ -134,7 +134,7 @@ class QPLearn(QLearn):
 # SARSA learners learn from 'experiences' -- good for online agents
 class SARSA(BaseLearner):
     def learn(self, reward):
-        if self.current_action and self.last_action and self.current_state != None and self.last_state != None:
+        if self.current_action and self.last_action and self.current_state is not None and self.last_state is not None:
             qnext = self.getQ(self.current_state, self.current_action)
             self.learnQ(self.last_state, self.last_action, self.last_reward, qnext)
         else:

@@ -182,9 +182,9 @@ class Agent(BaseAgent):
         if last_action:
             state_now = state_now + (self.learner.current_action,)
         self.learner.set_state(self.modify_state(state_now)) # sets all states
-        final_action = self.decide(self.learner) 
+        final_action = self.decide(self.learner)
         self.game.play(final_action)
-        reward = self.check_reward()
+        reward = self.check_reward() # 1=positive, -1=negative, 0=neutral
         value = self.calc_reward(reward)
         self.reward(value)
         return reward
