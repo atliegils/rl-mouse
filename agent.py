@@ -234,15 +234,15 @@ class OmniscientAgent(Agent):
     def get_fov(self, *args):
         m_loc = self.game.mouse # get mouse location
         # get cheese relative to mouse
-        cheese = (self.game.cheese[0] - m_loc[0] + self.game._cw) % self.game._cw, (self.game.cheese[1] - m_loc[1] + self.game._ch) % self.game._ch
+        cheese = (self.game.cheese[0] - m_loc[0]), -(self.game.cheese[1] - m_loc[1])
         # get trap relative to mouse
-        trap = (self.game.trap[0] - m_loc[0] + self.game._cw) % self.game._cw, (self.game.trap[1] - m_loc[1] + self.game._ch) % self.game._ch
+        trap = (self.game.trap[0] - m_loc[0]), -(self.game.trap[1] - m_loc[1])
         # now rotate cheese and trap around the origin depending on direction
         def rotate(item, angle):
             x,y = item
             xp = x * math.cos(math.radians(angle)) - y * math.sin(math.radians(angle))
             yp = x * math.sin(math.radians(angle)) + y * math.cos(math.radians(angle))
-            return int(xp), int(yp)
+            return int(round(xp)), int(round(yp))
         direction = self.game.direction
         if direction == 'up':
             angle = 0.0
@@ -252,7 +252,9 @@ class OmniscientAgent(Agent):
             angle = 180.0
         elif direction == 'left':
             angle = 270.0
-        return rotate(cheese, angle), rotate(trap, angle)
+        xcheese = rotate(cheese, angle)
+        xtrap = rotate(trap, angle)
+        return xcheese[0] % self.game._cw, xcheese[1] % self.game._ch, xtrap[0] % self.game._cw, xtrap[1] % self.game._ch
 
 class DeterministicAgent(OmniscientAgent):
     def __init__(self, game, actions):
