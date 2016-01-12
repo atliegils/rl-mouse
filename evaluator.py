@@ -72,8 +72,8 @@ def train(player, learner, max_runs=10000):
     player.reset_game()
 
 def dist_to_cheese(game):
-    assert game._cw == game._ch, 'not a square grid'
-    gz = game._cw
+    assert game.width == game.height, 'not a square grid'
+    gz = game.width
     max_len = (gz + 1) / 2 # looped grid
     mouse = game.mouse
     cheese = game.cheese
@@ -234,7 +234,7 @@ def pong_evaluate(player, runs=200, name='pong_eval', max_count=3000):
     return outfile, wins, loss
 
 def random_evaluate(player, runs=200, round_limit=300, name='rand_eval'):
-    target_limit = player.game._cw * player.game._ch / 2
+    target_limit = player.game.width * player.game.height / 2
     if target_limit > round_limit:
         round_limit = target_limit
         print 'setting round limit to {0}'.format(round_limit)
@@ -284,7 +284,7 @@ def random_evaluate(player, runs=200, round_limit=300, name='rand_eval'):
     return outfile
 
 def evaluate(player, max_runs=5000, round_limit=300, name='evaluation'):
-    target_limit = player.game._cw * player.game._ch / 2
+    target_limit = player.game.width * player.game.height / 2
     if target_limit > round_limit:
         round_limit = target_limit
         print 'setting round limit to {0}'.format(round_limit)
@@ -336,7 +336,7 @@ def evaluate(player, max_runs=5000, round_limit=300, name='evaluation'):
     return outfile
 
 def evaluate_old(player, max_runs=5000, round_limit=300):
-    # assumes a trained agent 
+    # assumes a trained agent
     player.game.suppressed = True
     outfile = 'evaluation.txt'
     local_length = 10 * round_limit

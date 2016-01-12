@@ -19,8 +19,8 @@ class Game:
     # default cell size
     def __init__(self, do_render=True):
         self._cc = 20
-        self._cw = 32
-        self._ch = 24
+        self.width = 32
+        self.height = 24
         self.do_render = do_render
         if self.do_render:  #   BIG RED NOTICE HERE
             global pygame   # -----------------------
@@ -38,7 +38,7 @@ class Game:
         self.easy = False
         self.reset()
         if self.do_render:
-            self.r = render.Renderer(self._cw * self._cc, self._ch * self._cc, self._cc)
+            self.r = render.Renderer(self.width * self._cc, self.height * self._cc, self._cc)
 
     def __del__(self):
         return # don't kill it :p otherwise we can't copy games
@@ -55,15 +55,15 @@ class Game:
 
     # custom cell size
     def set_size(self, cw, ch):
-        self._cw = cw
-        self._ch = ch
+        self.width = cw
+        self.height = ch
         self.reset()
         if self.do_render:
             del self.r
-            self.r = render.Renderer(self._cw * self._cc, self._ch * self._cc, self._cc)
+            self.r = render.Renderer(self.width * self._cc, self.height * self._cc, self._cc)
 
     def get_size(self):
-        return self._cw, self._ch, self._cc
+        return self.width, self.height, self._cc
 
     def render(self):
         if self.do_render:
@@ -122,8 +122,8 @@ class Game:
             self.mouse = (self.mouse[0] + 1, self.mouse[1])
 
         # loop the arena
-        self.mouse = ((self.mouse[0] + self._cw) % self._cw
-                , (self.mouse[1] + self._ch) % self._ch)
+        self.mouse = ((self.mouse[0] + self.width) % self.width
+                , (self.mouse[1] + self.height) % self.height)
 
     def move_trap(self):
         dx = max(-1, min(1, self.trap[0] - self.mouse[0]))
@@ -163,11 +163,11 @@ class Game:
         if fake: return 0
 
     def random_location(self):
-        x = random.randint(0, self._cw - 1)
-        y = random.randint(0, self._ch - 1)
+        x = random.randint(0, self.width - 1)
+        y = random.randint(0, self.height - 1)
         while ((x,y) == self.mouse or (x,y) == self.cheese or (x,y) == self.trap):
-            x = random.randint(0, self._cw - 1)
-            y = random.randint(0, self._ch - 1)
+            x = random.randint(0, self.width - 1)
+            y = random.randint(0, self.height - 1)
 
         return x, y
 
