@@ -77,12 +77,12 @@ def evaluation_plot(fn, display=True):
     y = get_data(fn)
     x = range(len(y[0]))
     p = figure(title=base_fn, x_axis_label='evaluation', y_axis_label='score', plot_width=1000)
-    p.circle(x, y[6], color='teal', learning_rate=0.5, size=3)      # extra steps
-#   p.circle(x, y[0], color='teal', learning_rate=0.5, size=0.5)    # score
-    p.circle(x, y[5], color='red', learning_rate=0.5, size=0.5)     # deaths/round
-    p.circle(x, y[2], color='black', learning_rate=0.5, size=0.5)   # timeouts (total)
-#   p.circle(x, y[3], color='blue', learning_rate=0.5, size=0.5)    # accumul. reward
-    p.circle(x, y[4], color='orange', learning_rate=0.9, size=0.5)  # local reward
+    p.circle(x, y[6], color='teal', alpha=0.5, size=3)      # extra steps
+#   p.circle(x, y[0], color='teal', alpha=0.5, size=0.5)    # score
+    p.circle(x, y[5], color='red', alpha=0.5, size=0.5)     # deaths/round
+    p.circle(x, y[2], color='black', alpha=0.5, size=0.5)   # timeouts (total)
+#   p.circle(x, y[3], color='blue', alpha=0.5, size=0.5)    # accumul. reward
+    p.circle(x, y[4], color='orange', alpha=0.9, size=0.5)  # local reward
 
     if display:
         show(p)
@@ -99,12 +99,12 @@ def counter_plot(fn, display=True):
     p.add_layout(LinearAxis(y_range_name='reward'), 'right')
     p.add_layout(LinearAxis(y_range_name='ratio'), 'left')
 #  p.add_layout(LinearAxis(y_range_name='ratio'), 'right')
-#   p.circle(x, y[6], color='teal', learning_rate=0.5, size=3)      # extra steps
-#   p.circle(x, y[0], color='teal', learning_rate=0.5, size=0.5)    # score
-    p.circle(x, y[1], color='red', learning_rate=0.8, size=2)     # deaths
-    p.circle(x, y[2], color='black', learning_rate=0.8, size=2)   # timeouts 
-    p.triangle(x, y[7], color='black', learning_rate=1, size=5, y_range_name='ratio')    # ratio
-    p.triangle(x, y[8], color='teal', learning_rate=1, size=5, y_range_name='ratio')    # performance
+#   p.circle(x, y[6], color='teal', alpha=0.5, size=3)      # extra steps
+#   p.circle(x, y[0], color='teal', alpha=0.5, size=0.5)    # score
+    p.circle(x, y[1], color='red', alpha=0.8, size=2)     # deaths
+    p.circle(x, y[2], color='black', alpha=0.8, size=2)   # timeouts
+    p.triangle(x, y[7], color='black', alpha=1, size=5, y_range_name='ratio')    # ratio
+    p.triangle(x, y[8], color='teal', alpha=1, size=5, y_range_name='ratio')    # performance
     p.line(x, y[3], color='blue', line_width=1, y_range_name='reward')    # accumul. reward
     p.y_range = Range1d(0, max(max(y[1]),max(y[2]))*1.10)
 
@@ -119,8 +119,8 @@ def pong_plot(fn, display=True):
     y = get_data(fn)
     x = range(len(y[0]))
     p = figure(title=base_fn, x_axis_label='evaluation', y_axis_label='count', plot_width=1000)
-    p.line(x, y[0], color='teal', learning_rate=0.8)    # wins
-    p.line(x, y[1], color='red', learning_rate=0.4)     # losses
+    p.line(x, y[0], color='teal', alpha=0.8)    # wins
+    p.line(x, y[1], color='red', alpha=0.4)     # losses
     p.y_range = Range1d(0, max(max(y[1]),max([0]))*1.10)
 
     if display:
@@ -139,14 +139,14 @@ def compare_evals(fn1, fn2):
     x = range(len(y1[0]))
     colors = ['teal', 'orange']
     p = figure(title=title, x_axis_label='evaluation', y_axis_label='score', plot_width=1000)
-    p.circle(x, y1[6], color=colors[0], learning_rate=0.5, size=3)
-    p.circle(x, y2[6], color=colors[1], learning_rate=0.5, size=3)
-    p.triangle(x, y1[5], color=colors[0], learning_rate=0.3, size=2)
-    p.triangle(x, y2[5], color=colors[1], learning_rate=0.3, size=2)
-    p.inverted_triangle(x, y1[2], color=colors[0], learning_rate=0.3, size=2)
-    p.inverted_triangle(x, y2[2], color=colors[1], learning_rate=0.3, size=2)
-    p.line(x, y1[4], color=colors[0], learning_rate=0.5, size=0.5)
-    p.line(x, y2[4], color=colors[1], learning_rate=0.5, size=0.5)
+    p.circle(x, y1[6], color=colors[0], alpha=0.5, size=3)
+    p.circle(x, y2[6], color=colors[1], alpha=0.5, size=3)
+    p.triangle(x, y1[5], color=colors[0], alpha=0.3, size=2)
+    p.triangle(x, y2[5], color=colors[1], alpha=0.3, size=2)
+    p.inverted_triangle(x, y1[2], color=colors[0], alpha=0.3, size=2)
+    p.inverted_triangle(x, y2[2], color=colors[1], alpha=0.3, size=2)
+    p.line(x, y1[4], color=colors[0], alpha=0.5, size=0.5)
+    p.line(x, y2[4], color=colors[1], alpha=0.5, size=0.5)
     show(p)
 
 def bench_plot():
@@ -166,7 +166,7 @@ def bench_plot():
             y = get_y_b(fn)
             x = range(len(y[0]))
 #           p.triangle(x, y[0], line_width=1, line_color=color)
-            p.circle(x, y[0], color=color, learning_rate=0.5, size=0.5)
+            p.circle(x, y[0], color=color, alpha=0.5, size=0.5)
     color = []
     color.append(['red', 'orange', 'blue'])
     color.append(['green', 'yellow', 'red'])
@@ -182,7 +182,7 @@ def bench_plot():
         x = range(len(y[0]))
 #       zp = np.poly1d(np.polyfit(x, y[2], 1))
 #       z = list([zp(aa) for aa in x])
-        p.line(x, y[4], line_width=1, line_color=color[i][2], line_learning_rate=0.45, y_range_name='reward2')
+        p.line(x, y[4], line_width=1, line_color=color[i][2], line_alpha=0.45, y_range_name='reward2')
         p.line(x, deaths, line_width=1, line_color=color[i][0], y_range_name='deaths')
         p.line(x, y[2], line_width=1, line_color=color[i][1])
         p.line(x, y[3], line_width=2, line_color=color[i][2], y_range_name='reward')
