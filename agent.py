@@ -254,6 +254,36 @@ class OmniscientAgent(Agent):
             angle = 270.0
         return rotate(cheese, angle), rotate(trap, angle)
 
+class DeterministicAgent(OmniscientAgent):
+    def __init__(self, game, actions):
+        self.game = game
+        self.score = 0
+        self.adjust_rewards( 1,  1,  0 )
+        self.reward_scaling([1, -1, -1])
+        self.accumulated = 0
+        self.learner_class = QLearn
+        self.learner = self.learner_class(actions, 0)
+        self.learning = True
+        self.dephased = False
+        self.fov = -1
+        self.policy = {}
+
+    def perform(self, explore=False, last_action=False, verbose=0):
+        self.verbose = verbose
+        state_now = self.get_fov(self.fov)
+        #print state_now
+        if last_action:
+            state_now = state_now + (self.learner.current_action,)
+        self.learner.set_state(self.modify_state(state_now)) # sets all states
+        #final_action = self.decide(self.learner)
+        final_action = self.policy.get(state_now, self.learner.actions[0])
+        # print final_action
+        self.game.play(final_action)
+        reward = self.check_reward() # 1=positive, -1=negative, 0=neutral
+        value = self.calc_reward(reward)
+        self.reward(value)
+        return reward
+
 # Like a regular agent, but instead of seeing a cone, it sees a square around it
 # uses omniscient agent state space logic
 class RadiusAgent(Agent):
