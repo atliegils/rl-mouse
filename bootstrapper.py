@@ -16,7 +16,7 @@ def convert(name):
     return name.rstrip('.py').replace('/','.').replace('solutions.','')
 
 def custom_training(agent):
-    agent.set_epsilon(0.1)
+    agent.set_exploration_rate(0.1)
     for i in xrange(args.custom_training):
         agent.perform()
 
@@ -31,7 +31,7 @@ def fetch_agent(exercise, game):
         agent.replace_actions(args.custom_actions)
     agent.reward_scaling([1, -1, -1])
     agent.fov = args.fov
-    agent.gamma = args.gamma
+    agent.discount_factor = args.discount_factor
     agent.game.suppressed = True
     # train the agent using the provided solution
     load_reward_profile(agent)
@@ -57,7 +57,7 @@ def evaluate(name, no_initial_training=False):
     # clean up after training
     agent.reward_scaling([1, -1, -1])
     agent.accumulated = 0   # reset accumulated rewards
-    agent.set_epsilon(0.0)  # turn off exploration
+    agent.set_exploration_rate(0.0)  # turn off exploration
     agent.game.reset()      # reset the game
     agent.game.high_score = 0
     agent.fov  = args.fov
@@ -123,7 +123,7 @@ def count_epochs(name):
             # clean up after training
             agent.reward_scaling([1, -1, -1])
             agent.accumulated = 0   # reset accumulated rewards
-            agent.set_epsilon(0.0)  # turn off exploration
+            agent.set_exploration_rate(0.0)  # turn off exploration
             agent.game.reset()      # reset the game
             agent.game.high_score = 0
             agent.fov  = args.fov
@@ -212,7 +212,7 @@ if __name__ == '__main__':
     parser.add_argument('--outfile', metavar='FILENAME', help='output file name')
     parser.add_argument('-g', '--grid_size', type=int, default=10, help='grid size')
     parser.add_argument('-f', '--fov', type=int, default=3, help='base field of view')
-    parser.add_argument('--gamma', type=float, default=0.8, metavar='FLOAT', help='discount factor')
+    parser.add_argument('--discount_factor', type=float, default=0.8, metavar='FLOAT', help='discount factor')
     parser.add_argument('-c', '--compare_to', metavar='OTHER_FILE', help='compare two solutions')
     parser.add_argument('--custom_rewards', metavar='CHEESE,TRAP,HUNGER', help='reward profile in the format "c,t,h" (without quotes)')
     parser.add_argument('--dephase', action='store_true', help=u'swap reward scalars (180\N{DEGREE SIGN} out of phase)')

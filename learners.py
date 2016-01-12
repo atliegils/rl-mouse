@@ -5,11 +5,11 @@ class NotImplementedException(Exception):
 
 ### Base learner class
 class BaseLearner:
-    def __init__(self, actions, epsilon=0.1, alpha=0.2, gamma=0.9):
+    def __init__(self, actions, exploration_rate=0.1, learning_rate=0.2, discount_factor=0.9):
         self.q = {}
-        self.epsilon = epsilon
-        self.alpha   = alpha
-        self.gamma   = gamma
+        self.exploration_rate = exploration_rate
+        self.learning_rate    = learning_rate
+        self.discount_factor  = discount_factor
         self.actions = actions
         self.last_reward = 0
         self.last_action = None
@@ -58,8 +58,8 @@ class BaseLearner:
             return # don't learn anything yet
         oldv = self.getQ(state, action)
         row = self.q.get(state, self.get_default_row())
-        value = reward + self.gamma * maxqnew
-        row[action] = oldv + self.alpha * (value - oldv)
+        value = reward + self.discount_factor * maxqnew
+        row[action] = oldv + self.learning_rate * (value - oldv)
         self.q[state] = row
 
     # Should be implemented in subclasses
@@ -78,7 +78,7 @@ class BaseLearner:
     # select an action based on the current state of the learner
     def select(self):
         state = self.current_state
-        if random.random < self.epsilon:
+        if random.random < self.exploration_rate:
             action = random.choice(self.actions)
         else:
             vals = [self.getQ(state, a) for a in self.actions]
@@ -121,7 +121,7 @@ class QPLearn(QLearn):
             return i
         # select(self)
         state = self.current_state
-        if random.random < self.epsilon:
+        if random.random < self.exploration_rate:
             action = random.choice(self.actions)
         else:
             vals = [self.getQ(state, a) for a in self.actions]
@@ -144,11 +144,11 @@ class SARSA(BaseLearner):
 # Learner that optionally selects its action based on a past state
 class HistoryManager(BaseLearner):
 
-    def __init__(self, epsilon=0.1, alpha=0.2, gamma=0.9):
+    def __init__(self, exploration_rate=0.1, learning_rate=0.2, discount_factor=0.9):
         self.q = {}
-        self.epsilon = epsilon
-        self.alpha   = alpha
-        self.gamma   = gamma
+        self.exploration_rate = exploration_rate
+        self.learning_rate   = learning_rate
+        self.discount_factor   = discount_factor
         self.last_reward = 0
         self.last_action = None
         self.last_state  = None
@@ -215,11 +215,11 @@ class HistoryManager(BaseLearner):
 # Meta learner that forms a tree structure of learners, rewarding an
 class MetaLearner(BaseLearner):
     
-    def __init__(self, left, right, epsilon=0.1, alpha=0.2, gamma=0.9):
+    def __init__(self, left, right, exploration_rate=0.1, learning_rate=0.2, discount_factor=0.9):
         self.q = {}
-        self.epsilon = epsilon
-        self.alpha   = alpha
-        self.gamma   = gamma
+        self.exploration_rate = exploration_rate
+        self.learning_rate   = learning_rate
+        self.discount_factor   = discount_factor
         self.side = ''
         self.last_reward = 0
         self.last_action = None

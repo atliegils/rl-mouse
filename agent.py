@@ -4,19 +4,19 @@ from game import Game
 from learners import HistoryManager, SARSA, MetaLearner, QLearn
 
 class BaseAgent(object):
-    def __init__(self, game, actions, epsilon=0.1, learner_class=SARSA):
+    def __init__(self, game, actions, exploration_rate=0.1, learner_class=SARSA):
         self.game = game
         self.score = 0
         self.accumulated = 0
         self.learner_class = learner_class
-        self.learner = learner_class(actions, epsilon)
+        self.learner = learner_class(actions, exploration_rate)
         self.learning = True
 
     def replace_actions(self, actions):
-        self.learner = self.learner_class(actions, self.learner.epsilon)
+        self.learner = self.learner_class(actions, self.learner.exploration_rate)
 
-    def set_epsilon(self, epsilon):
-        self.learner.epsilon = epsilon
+    def set_exploration_rate(self, exploration_rate):
+        self.learner.exploration_rate = exploration_rate
 
     def decide(self, learner):
         return learner.select()
@@ -30,7 +30,7 @@ class BaseAgent(object):
 
 # CAT, CHEESE AND TRAP AGENTS
 class Agent(BaseAgent):
-    def __init__(self, game, actions, epsilon=0.1, fov=2, learner_class=SARSA):
+    def __init__(self, game, actions, exploration_rate=0.1, fov=2, learner_class=SARSA):
         self.game = game
         self.score = 0
         self.adjust_rewards( 1,  1,  0 )
@@ -38,7 +38,7 @@ class Agent(BaseAgent):
         self.accumulated = 0
         self.fov = fov
         self.learner_class = learner_class
-        self.learner = learner_class(actions, epsilon)
+        self.learner = learner_class(actions, exploration_rate)
         self.learning = True
         self.dephased = False
 
@@ -204,14 +204,14 @@ class Agent(BaseAgent):
         return state
 
 class OmniscientAgent(Agent):
-    def __init__(self, game, actions, epsilon=0.1, learner_class=SARSA):
+    def __init__(self, game, actions, exploration_rate=0.1, learner_class=SARSA):
         self.game = game
         self.score = 0
         self.adjust_rewards( 1,  1,  0 )
         self.reward_scaling([1, -1, -1])
         self.accumulated = 0
         self.learner_class = learner_class
-        self.learner = learner_class(actions, epsilon)
+        self.learner = learner_class(actions, exploration_rate)
         self.learning = True
         self.dephased = False
         self.fov = -1
@@ -257,14 +257,14 @@ class OmniscientAgent(Agent):
 # Like a regular agent, but instead of seeing a cone, it sees a square around it
 # uses omniscient agent state space logic
 class RadiusAgent(Agent):
-    def __init__(self, game, actions, epsilon, learner_class=SARSA, fov=2):
+    def __init__(self, game, actions, exploration_rate, learner_class=SARSA, fov=2):
         self.game = game
         self.score = 0
         self.adjust_rewards( 1,  1,  0 )
         self.reward_scaling([1, -1, -1])
         self.accumulated = 0
         self.learner_class = learner_class
-        self.learner = learner_class(actions, epsilon)
+        self.learner = learner_class(actions, exploration_rate)
         self.learning = True
         self.dephased = False
         self.fov = fov # here fov = radius
@@ -338,14 +338,14 @@ class WrapperAgent(Agent):
 
 # Agent that tracks history
 class HistoricalAgent(Agent):
-    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=2, learner_class=SARSA):
+    def __init__(self, game, actions, levels=2, exploration_rate=0.1, fov=2, learner_class=SARSA):
         self.learners = []
         self.learner_class = learner_class
         self.game = game
         self.score = 0
         self.accumulated = 0
         self.fov = fov
-        self.create_learners(levels, epsilon, actions)
+        self.create_learners(levels, exploration_rate, actions)
         self.levels=levels
         self.cr = 5
         self.tr = 10
@@ -354,28 +354,28 @@ class HistoricalAgent(Agent):
         self.dephased = False
 
     def replace_actions(self, actions):
-        self.create_learners(self.levels, epsilon, actions)
+        self.create_learners(self.levels, exploration_rate, actions)
 
-    def set_epsilon(self, epsilon):
-        def set_epsilon(learner, epsilon):
+    def set_exploration_rate(self, exploration_rate):
+        def set_exploration_rate(learner, exploration_rate):
             left = learner.left_learner
             right = learner.history_learner
             if left:
-                set_epsilon(left, epsilon)
+                set_exploration_rate(left, exploration_rate)
             if right:
-                set_epsilon(right, epsilon)
-            learner.epsilon = epsilon
-        set_epsilon(self.main_learner, epsilon)
+                set_exploration_rate(right, exploration_rate)
+            learner.exploration_rate = exploration_rate
+        set_exploration_rate(self.main_learner, exploration_rate)
 
-    def create_learners(self, levels, epsilon, actions):
-        bottom_level = HistoryManager(epsilon)
-        bottom_level.history_learner = self.learner_class(actions, epsilon)
-        bottom_level.left_learner = self.learner_class(actions, epsilon)
+    def create_learners(self, levels, exploration_rate, actions):
+        bottom_level = HistoryManager(exploration_rate)
+        bottom_level.history_learner = self.learner_class(actions, exploration_rate)
+        bottom_level.left_learner = self.learner_class(actions, exploration_rate)
         top = bottom_level
         for i in range(levels-1):
             top.q = {}
-            next_level = HistoryManager(epsilon)
-            next_level.left_learner = self.learner_class(actions, epsilon)
+            next_level = HistoryManager(exploration_rate)
+            next_level.left_learner = self.learner_class(actions, exploration_rate)
             next_level.history_learner = top
             top = next_level
         self.main_learner = top
@@ -449,34 +449,34 @@ class HistoricalAgent(Agent):
                     print 'S{0} rewarded with {1}.'.format(s, value)
 
 class MetaAgent(Agent):
-    def __init__(self, game, actions, levels=2, epsilon=0.1, fov=2, learner_class=SARSA):
+    def __init__(self, game, actions, levels=2, exploration_rate=0.1, fov=2, learner_class=SARSA):
         self.game = game
         self.score = 0
         self.accumulated = 0
         self.fov = fov
         self.learner_class = learner_class
-        self.epsilon = epsilon
-        self.alpha = 0.2
-        self.gamma = 0.9
-        left  = learner_class(actions, epsilon)
-        right = learner_class(actions, epsilon)
-        self.learner = MetaLearner(left, right, epsilon, alpha=0.2, gamma=0.9)
+        self.exploration_rate = exploration_rate
+        self.learning_rate = 0.2
+        self.discount_factor = 0.9
+        left  = learner_class(actions, exploration_rate)
+        right = learner_class(actions, exploration_rate)
+        self.learner = MetaLearner(left, right, exploration_rate, learning_rate=0.2, discount_factor=0.9)
         self.learning = True
         self.dephased = False
 
     def replace_actions(self, actions):
-        left = self.learner_class(actions, self.epsilon)
-        right = self.learner_class(actions, self.epsilon)
-        self.learner = MetaLearner(left, right, self.epsilon, self.alpha, self.gamma)
+        left = self.learner_class(actions, self.exploration_rate)
+        right = self.learner_class(actions, self.exploration_rate)
+        self.learner = MetaLearner(left, right, self.exploration_rate, self.learning_rate, self.discount_factor)
 
-    def set_epsilon(self, epsilon):
-        def set_epsilon(learner, epsilon):
+    def set_exploration_rate(self, exploration_rate):
+        def set_exploration_rate(learner, exploration_rate):
             if hasattr(learner, 'left_learner'):
-                set_epsilon(learner.left_learner, epsilon)
+                set_exploration_rate(learner.left_learner, exploration_rate)
             if hasattr(learner, 'right_learner'):
-                set_epsilon(learner.right_learner, epsilon)
-            learner.epsilon = epsilon
-        set_epsilon(self.learner, epsilon)
+                set_exploration_rate(learner.right_learner, exploration_rate)
+            learner.exploration_rate = exploration_rate
+        set_exploration_rate(self.learner, exploration_rate)
 
     def set_states(self, last_action=False):
         # active state

@@ -48,7 +48,7 @@ def create_datapoint(score, high_score, last_scores, diff_local=False):
 def train(player, learner, max_runs=10000):
     actions = ['left', 'forward', 'right']
     i = 0
-    learner.epsilon = 0.10 # encourage exploration
+    learner.exploration_rate = 0.10 # encourage exploration
     t_start = time.time()
     time_limit = 1.0
     seconds_passed = 0.0
@@ -407,9 +407,9 @@ def main():
     # configure player object
     if args.meta:
         if args.test:
-            player = agent.CheeseMeta(game, ['left', 'forward', 'right'], epsilon=args.epsilon, fov=args.fov)
+            player = agent.CheeseMeta(game, ['left', 'forward', 'right'], exploration_rate=args.exploration_rate, fov=args.fov)
         else:
-            player = agent.MetaAgent(game, ['left', 'forward', 'right'], epsilon=args.epsilon, fov=args.fov)
+            player = agent.MetaAgent(game, ['left', 'forward', 'right'], exploration_rate=args.exploration_rate, fov=args.fov)
         player.side = args.side
     else:
         player = agent.Agent(game, ['left', 'forward', 'right'])
@@ -436,7 +436,7 @@ if __name__ == '__main__':
     parser.add_argument('-tr', '--trap_reward', type=int, default=-10, help='reward for getting caught in a trap (should be negative)')
     parser.add_argument('-hr', '--hunger_reward', type=int, default=-1, help='reward for not eating cheese or doing anything important')
     parser.add_argument('-g', '--grid_size', type=int, default=7, help='grid size')
-    parser.add_argument('-e', '--epsilon', type=float, default=0.02, help='custom epsilon value')
+    parser.add_argument('-e', '--exploration_rate', type=float, default=0.02, help='custom exploration_rate value')
     parser.add_argument('--data_interval', type=int, metavar='N', default=1, help='only write every Nth datapoint')
     parser.add_argument('--round_limit', type=int, metavar='N', default=0, help='limit rounds to N steps')
     parser.add_argument('--fov', type=int, default=3, help='how far the agent can see')

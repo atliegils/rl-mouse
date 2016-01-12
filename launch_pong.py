@@ -60,7 +60,7 @@ def pong_eval(name):
     #       agent.learner.dump_policy(str(x))
             # clean up after training
             agent.accumulated = 0   # reset accumulated rewards
-            agent.set_epsilon(0.0)  # turn off exploration
+            agent.set_exploration_rate(0.0)  # turn off exploration
             agent.game.reset()      # reset the game
             agent.game = original_game # if the training modifies the game, it is fixed here
             # evaluate the training results
