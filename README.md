@@ -6,18 +6,14 @@ TEAL requires Python 2.7+. Clone or download the git repository. In order to use
 
 ## Students (crafting a solution)
 
-The solution to an exercise consists of three methods that need to be implemented.
-These are the `get_agent`, `train` and `reward_profile` methods. See solutions/example.py.
+The solution to an exercise consists of two methods that need to be implemented.
+These are the `get_agent`, and `train` methods. See solutions/example.py.
 
 ### `get_agent`
 The `get_agent` method takes a `Game` as a parameter and should return an `Agent` (any subclass of `Agent` is fine). The returned `Agent` instance should be configured for the provided `Game`, and will be passed as a parameter into the `train` method.
 
 ### `train`
 The `train` method takes an `agent` as a parameter and performs any necessary actions to train the agent to solve the given task. Once training is completed, exploration is turned off.
-
-### `reward_profile`
-The `reward_profile` method takes an `agent` as a parameter and adjusts the reward profile of that agent, generally with `adjust_rewards(args)`.
-The reward profile is scaled by `[1, -1, -1]` during evaluations.
 
 ## Evaluating solutions
 It's important to note that due to the stochastic policies of learners, a solution can yield different evaluation results between runs.
