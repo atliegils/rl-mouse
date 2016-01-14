@@ -315,7 +315,7 @@ def evaluate(player, max_runs=5000, round_limit=300, name='evaluation'):
             player.reset_game()
             timeouts += 1
         # create data point
-        local_reward = sum(accumulated_reward[-local_length:]) / min(local_length, local_position)
+        local_reward = float(sum(accumulated_reward[-local_length:])) / min(local_length, local_position+1)
         ratio = target_distance / current_step
         extra_steps = current_step - target_distance + target_distance * local_deaths
         data_point = (player.game.score, deaths, timeouts, player.accumulated, local_reward, local_deaths, extra_steps, ratio)
