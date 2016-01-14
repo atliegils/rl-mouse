@@ -134,20 +134,22 @@ def compare_evals(fn1, fn2):
     assert fn2, 'fn2 is a {0}'.format(type(fn2))
     base_fn = fn1[:fn1.find('.txt')], fn2[:fn2.find('.txt')]
     title=base_fn[0] + ' vs ' + base_fn[1]
-    output_file('comparisons'+os.sep+base_fn[0][base_fn[0].find(os.sep)+1:]+'vs'+base_fn[1][base_fn[1].find(os.sep)+1:]+'.html', title=title)
     y1 = get_data(fn1)
     y2 = get_data(fn2)
+    output_file('comparisons'+os.sep+base_fn[0][base_fn[0].find(os.sep)+1:]+'vs'+base_fn[1][base_fn[1].find(os.sep)+1:]+'.html', title=title)
     x = range(len(y1[0]))
     colors = ['teal', 'orange']
     p = figure(title=title, x_axis_label='evaluation', y_axis_label='score', plot_width=1000)
+    p.extra_y_ranges = {'reward': Range1d(start=min(0, min(y1[4]), min(y2[4]))*1.05, end=max(0, max(y1[4]), max(y2[4]))*1.05)}
+    p.add_layout(LinearAxis(y_range_name='reward', axis_label='reward'), 'right')
     p.circle(x, y1[6], color=colors[0], alpha=0.5, size=3)
     p.circle(x, y2[6], color=colors[1], alpha=0.5, size=3)
     p.triangle(x, y1[5], color=colors[0], alpha=0.3, size=2)
     p.triangle(x, y2[5], color=colors[1], alpha=0.3, size=2)
     p.inverted_triangle(x, y1[2], color=colors[0], alpha=0.3, size=2)
     p.inverted_triangle(x, y2[2], color=colors[1], alpha=0.3, size=2)
-    p.line(x, y1[4], color=colors[0], alpha=0.5)
-    p.line(x, y2[4], color=colors[1], alpha=0.5)
+    p.line(x, y1[4], color=colors[0], alpha=0.5, y_range_name='reward')
+    p.line(x, y2[4], color=colors[1], alpha=0.5, y_range_name='reward')
     show(p)
 
 def bench_plot():
