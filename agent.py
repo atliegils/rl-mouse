@@ -230,31 +230,22 @@ class OmniscientAgent(Agent):
         raw_input(state_string)
         return state_string
 
-    # Just pretend to change the game, then return dx,dy pairs for cheese and trap
     def get_fov(self, *args):
-        m_loc = self.game.mouse # get mouse location
-        # get cheese relative to mouse
-        cheese = (self.game.cheese[0] - m_loc[0]), -(self.game.cheese[1] - m_loc[1])
-        # get trap relative to mouse
-        trap = (self.game.trap[0] - m_loc[0]), -(self.game.trap[1] - m_loc[1])
-        # now rotate cheese and trap around the origin depending on direction
-        def rotate(item, angle):
-            x,y = item
-            xp = x * math.cos(math.radians(angle)) - y * math.sin(math.radians(angle))
-            yp = x * math.sin(math.radians(angle)) + y * math.cos(math.radians(angle))
-            return int(round(xp)), int(round(yp))
-        direction = self.game.direction
-        if direction == 'up':
-            angle = 0.0
-        elif direction == 'right':
-            angle = 90.0
-        elif direction == 'down':
-            angle = 180.0
-        elif direction == 'left':
-            angle = 270.0
-        xcheese = rotate(cheese, angle)
-        xtrap = rotate(trap, angle)
-        return xcheese[0] % self.game.width, xcheese[1] % self.game.height, xtrap[0] % self.game.width, xtrap[1] % self.game.height
+        # can always view the cheese and the trap objects
+        # objects are relative to the mouse
+        # all coordinates are >= 0 so that they indicate how far the object is
+        # in front and to the right of the mouse (the grid is circular though)
+        cx, cy = self.game.get_relative_location(self.game.cheese)
+        tx, ty = self.game.get_relative_location(self.game.trap)
+        if cx < 0:
+            cx = self.game.width + cx
+        if cy < 0:
+            cy = self.game.height + cy
+        if tx < 0:
+            tx = self.game.width + tx
+        if ty < 0:
+            ty = self.game.height + ty
+        return cx, cy, tx, ty
 
 class DeterministicAgent(OmniscientAgent):
     def __init__(self, game, actions):

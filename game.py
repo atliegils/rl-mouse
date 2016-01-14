@@ -1,5 +1,5 @@
 import random
-import time
+import math
 
 # Constants
 FPS = 15
@@ -170,3 +170,32 @@ class Game:
 
         return x, y
 
+    def get_relative_location(self, item):
+        """Gets the relative location of the item to the mouse.
+        Resulting coordinates x,y are in the range [-(width-1)/2,width/2]
+         and [-(height-1)/2,height/2] and signify how far the item is
+         in front and to the right of the mouse."""
+
+        # get object relative to mouse
+        item = (item[0] - self.mouse[0]), -(item[1] - self.mouse[1])
+
+        # rotate
+        direction = self.direction
+        if direction == 'up':
+            angle = 0.0
+        elif direction == 'right':
+            angle = 90.0
+        elif direction == 'down':
+            angle = 180.0
+        elif direction == 'left':
+            angle = 270.0
+        x, y = item
+        xp = x * math.cos(math.radians(angle)) - y * math.sin(math.radians(angle))
+        yp = x * math.sin(math.radians(angle)) + y * math.cos(math.radians(angle))
+        item = int(round(xp)), int(round(yp))
+
+        # normalize around mouse
+        item = item[0] % self.width, item[1] % self.height
+        x = item[0] if item[0] <= self.width / 2 else item[0] - self.width
+        y = item[1] if item[1] <= self.height / 2 else item[1] - self.height
+        return x, y
