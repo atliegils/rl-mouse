@@ -111,9 +111,6 @@ def dist_to_cheese(game):
 
     return min(dist + add, max_len)
 
-def expected_distance(actual_dist):
-    return float(actual_dist) * 3.85   # approximately accurate for trained sarsa on 15x15
-
 def benchmark(player, max_runs=5000):
     player.game.suppressed = True
     outfile = 'test.txt'
@@ -269,9 +266,7 @@ def random_evaluate(player, runs=200, round_limit=300, name='rand_eval'):
         target_steps += target_distance
     # create data point
     ratio = float(target_steps) / (extra_steps + target_steps)
-    expected_steps = expected_distance(target_steps)
-    performance = expected_steps / (expected_steps + extra_steps)
-    data_point = (player.game.score, deaths, timeouts, player.accumulated, 0, local_deaths, extra_steps, ratio, performance)
+    data_point = (player.game.score, deaths, timeouts, player.accumulated, 0, local_deaths, extra_steps, ratio, 0)
     # save data point
     data.append(data_point)
     dirname = os.path.dirname(outfile)
