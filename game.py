@@ -18,7 +18,6 @@ class Game:
 
     # default cell size
     def __init__(self, do_render=True):
-        self._cc = 20
         self.width = 32
         self.height = 24
         self.do_render = do_render
@@ -38,7 +37,7 @@ class Game:
         self.easy = False
         self.reset()
         if self.do_render:
-            self.r = render.Renderer(self.width * self._cc, self.height * self._cc, self._cc)
+            self.r = render.Renderer(self.width, self.height)
 
     def __del__(self):
         return # don't kill it :p otherwise we can't copy games
@@ -60,10 +59,10 @@ class Game:
         self.reset()
         if self.do_render:
             del self.r
-            self.r = render.Renderer(self.width * self._cc, self.height * self._cc, self._cc)
+            self.r = render.Renderer(self.width, self.height)
 
     def get_size(self):
-        return self.width, self.height, self._cc
+        return self.width, self.height
 
     def render(self):
         if self.do_render:

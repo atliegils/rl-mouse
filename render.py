@@ -23,17 +23,16 @@ BGCOLOR = BLACK
 class Renderer:
     display = None
     basic_font = None
-    _cc = None
+    _cc = CELL_SIZE
     _ww = 320
     _wh = 240
     
-    def __init__(self, ww, wh, cc):
+    def __init__(self, ww, wh):
         self.display = pygame.display.set_mode((ww, wh))
         self.basic_font = pygame.font.Font('freesansbold.ttf', 18)
         pygame.display.set_caption('Mouse Game')
-        self._cc = cc
-        self._ww = ww
-        self._wh = wh
+        self._ww = ww * self._cc
+        self._wh = wh * self._cc
 
     def render(self, items, score):
         self.display.fill(BGCOLOR)
