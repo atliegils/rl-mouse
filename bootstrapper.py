@@ -21,9 +21,11 @@ def comparison():
     with open(os.path.join(target_path, 'settings.txt'), 'w') as fh:
         fh.write(configuration[1])
 
-    e1 = evaluate(args.solution_name)
-    e2 = evaluate(args.compare_to)
-    compare_evals(e1, e2)
+    e1 = count_epochs(args.solution_name)
+    e2 = count_epochs(args.compare_to)
+    # TODO: change compare_evals
+    compare_evals(e1, e2) # TODO TODO TODO
+    # TODO  TODO TODO  TODO TODO 
 
 def convert(name):
     return name.rstrip('.py').replace(os.sep,'.').replace('solutions.','')
@@ -49,48 +51,6 @@ def fetch_agent(exercise, game):
     # train the agent using the provided solution
     load_reward_profile(agent)
     return agent
-
-def evaluate(name, initial_training=True):
-    # import the solution name into the global namespace as 'exercise'
-    exercise = __import__(convert(name))
-    name = convert(name)
-
-    # game and agent setup code
-    game = Game(do_render=args.render)
-    game.set_size(args.grid_size, args.grid_size)
-    original_game = copy.copy(game)
-
-    # fetch the agent from the provided solution
-    agent = fetch_agent(exercise, game)
-
-    file_name_add = ''
-    if initial_training:
-        if args.dephase:
-            agent.dephase = True
-        exercise.train(agent)
-    else: 
-        file_name_add = 'no_train_'
-
-    # clean up after training
-    agent.reward_scaling([1, -1, -1])
-    agent.accumulated = 0   # reset accumulated rewards
-    agent.set_exploration_rate(0.0)  # turn off exploration
-    agent.game.reset()      # reset the game
-    agent.game.high_score = 0
-    agent.fov  = args.fov
-    agent.game = original_game # if the training modifies the game, it is fixed here
-#   load_reward_profile(agent)
-
-    if args.dephase:
-        agent.dephase = False
-        exercise.train(agent)
-
-    # evaluate the training results
-    folder = 'eval_solutions'
-    file_name = evaluator.evaluate(agent, name=os.path.join(folder, file_name_add+name))
-    # print out a nice summary of how the evaluation went
-    summarizer.summarize_e(file_name)
-    return file_name
 
 def count_epochs(name):
     # import the solution name into the global namespace as 'exercise'
@@ -161,9 +121,11 @@ def count_epochs(name):
     summarizer.summarize_ec(file_name)
     return file_name
 
+# TODO: needs work
 def dephase():
-    file_name = evaluate(args.solution_name)
-    file_name2 = evaluate(args.solution_name, initial_training=False)
+    file_name = count_evals(args.solution_name)
+    file_name2 = count_evals(args.solution_name, initial_training=False)
+    # TODO TODO TODO
     compare_evals(file_name, file_name2)
 
 def main():
@@ -173,10 +135,7 @@ def main():
     for iteration_number in range(num_iters):
         if args.outfile and os.path.exists(args.outfile): # what if args.multi?
             raise OSError('The destination file already exists, move it or pick another name.')
-        if args.count_epochs:
-            file_name = count_epochs(args.solution_name)
-        else:
-            file_name = evaluate(args.solution_name)
+        file_name = count_epochs(args.solution_name)
         if args.outfile or args.multi:
             outname = args.outfile or file_name
             if args.multi:
@@ -184,11 +143,7 @@ def main():
             os.rename(file_name, outname)
             file_name = outname
         evals.append(file_name)
-
-        if args.count_epochs:
-            counter_plot(file_name, display=show)
-        else:
-            evaluation_plot(file_name, display=show)
+        counter_plot(file_name, display=show)
     if args.multi:
         summarizer.sum_sum(evals)
 
@@ -226,7 +181,6 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--compare_to', metavar='OTHER_FILE', help='compare two solutions')
     parser.add_argument('--custom_rewards', metavar='CHEESE,TRAP,HUNGER', help='reward profile in the format "c,t,h" (without quotes)')
     parser.add_argument('--dephase', action='store_true', help=u'swap reward scalars (180\N{DEGREE SIGN} out of phase)')
-    parser.add_argument('--count_epochs', action='store_true', help='run random evaluations')
     parser.add_argument('--max_epochs', type=int, metavar='MAX', default=100, help='maximum number of epochs to count to during count evaluations')
     parser.add_argument('--custom_training', type=int, metavar='STEPS', help='custom number of training steps per session (training only `performs` on the agent)')
     parser.add_argument('--custom_actions', type=lambda s: [item.strip() for item in s.split(',')], metavar='"left,right,forward,?",...', help='Replace solution actions with custom actions')
