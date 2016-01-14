@@ -7,6 +7,12 @@ import os, sys, traceback
 from game import Game
 from functools import partial
 
+def load_reward_profile(agent):
+    if args.custom_rewards:
+        agent.adjust_rewards(*map(int, args.custom_rewards.split(',')))
+    else:
+        agent.adjust_rewards(2,3,1)
+
 def comparison():
     folder = 'comparisons'
     configuration = setting_configuration()
@@ -36,11 +42,6 @@ def custom_training(agent):
         agent.perform()
 
 def fetch_agent(exercise, game):
-    def load_reward_profile(agent):
-        if args.custom_rewards:
-            agent.adjust_rewards(*map(int, args.custom_rewards.split(',')))
-        else:
-            exercise.reward_profile(agent)
     agent = exercise.get_agent(game)
     if args.custom_actions:
         agent.replace_actions(args.custom_actions)
@@ -57,11 +58,6 @@ def count_epochs(name):
     exercise = __import__(convert(name))
     name = convert('{0}_{1}'.format(args.grid_size, name))
     
-    def load_reward_profile(agent):
-        if args.custom_rewards:
-            agent.adjust_rewards(*map(int, args.custom_rewards.split(',')))
-        else:
-            exercise.reward_profile(agent)
     # game and agent setup code
     game = Game(do_render=args.render)
     game.set_size(args.grid_size, args.grid_size)
