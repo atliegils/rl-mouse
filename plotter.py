@@ -1,6 +1,6 @@
 #!/usr/bin/python2
 import argparse
-import operator
+import os
 #import numpy as np
 from bokeh.plotting import figure, output_file, save, show
 from bokeh.models import LinearAxis, Range1d
@@ -134,7 +134,7 @@ def compare_evals(fn1, fn2):
     assert fn2, 'fn2 is a {0}'.format(type(fn2))
     base_fn = fn1[:fn1.find('.txt')], fn2[:fn2.find('.txt')]
     title=base_fn[0] + ' vs ' + base_fn[1]
-    output_file(base_fn[0][base_fn[0].find('/')+1:]+'vs'+base_fn[1][base_fn[1].find('/')+1:]+'.html', title=title)
+    output_file('comparisons'+os.sep+base_fn[0][base_fn[0].find(os.sep)+1:]+'vs'+base_fn[1][base_fn[1].find(os.sep)+1:]+'.html', title=title)
     y1 = get_data(fn1)
     y2 = get_data(fn2)
     x = range(len(y1[0]))
@@ -146,8 +146,8 @@ def compare_evals(fn1, fn2):
     p.triangle(x, y2[5], color=colors[1], alpha=0.3, size=2)
     p.inverted_triangle(x, y1[2], color=colors[0], alpha=0.3, size=2)
     p.inverted_triangle(x, y2[2], color=colors[1], alpha=0.3, size=2)
-    p.line(x, y1[4], color=colors[0], alpha=0.5, size=0.5)
-    p.line(x, y2[4], color=colors[1], alpha=0.5, size=0.5)
+    p.line(x, y1[4], color=colors[0], alpha=0.5)
+    p.line(x, y2[4], color=colors[1], alpha=0.5)
     show(p)
 
 def bench_plot():

@@ -8,12 +8,25 @@ from game import Game
 from functools import partial
 
 def comparison():
+    folder = 'comparisons'
+    configuration = setting_configuration()
+    target_path = os.path.join(folder, configuration[0])
+    try:
+        os.makedirs(target_path)
+    except OSError as e: # silently ignore any errors, other errors _will_ appear if this fails
+        import errno
+        if e.errno == errno.EEXIST and os.path.isdir(target_path):
+            pass
+        else: raise
+    with open(os.path.join(target_path, 'settings.txt'), 'w') as fh:
+        fh.write(configuration[1])
+
     e1 = evaluate(args.solution_name)
     e2 = evaluate(args.compare_to)
     compare_evals(e1, e2)
 
 def convert(name):
-    return name.rstrip('.py').replace('/','.').replace('solutions.','')
+    return name.rstrip('.py').replace(os.sep,'.').replace('solutions.','')
 
 def custom_training(agent):
     agent.set_exploration_rate(0.1)
@@ -183,7 +196,7 @@ def setting_configuration():
     config_lines = []
     for arg in vars(args):
         config_lines.append('{0}: {1}'.format(arg, getattr(args, arg)))
-    config_name = '+'.join(sys.argv[1:]).strip('.').strip('/')
+    config_name = '+'.join(sys.argv[1:]).strip('.').strip(os.sep)
 
     return config_name, '\n'.join(config_lines)+'\n'
 
