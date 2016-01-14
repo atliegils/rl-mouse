@@ -295,7 +295,7 @@ def evaluate(player, max_runs=5000, round_limit=300, name='evaluation'):
     accumulated_reward = [] 
     evaluation_configurations = generate_configurations()
     # evaluation loop
-    for configuration in evaluation_configurations:
+    for local_position, configuration in enumerate(evaluation_configurations):
         current_step = 0
         local_deaths = 0
         configure_game(player, *configuration)
@@ -315,7 +315,7 @@ def evaluate(player, max_runs=5000, round_limit=300, name='evaluation'):
             player.reset_game()
             timeouts += 1
         # create data point
-        local_reward = sum(accumulated_reward[-local_length:])
+        local_reward = sum(accumulated_reward[-local_length:]) / min(local_length, local_position)
         ratio = target_distance / current_step
         extra_steps = current_step - target_distance + target_distance * local_deaths
         data_point = (player.game.score, deaths, timeouts, player.accumulated, local_reward, local_deaths, extra_steps, ratio)
