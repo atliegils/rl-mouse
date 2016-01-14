@@ -6,8 +6,8 @@ def get_agent(game):
     """Modify this method to create the appropriate agent"""
     actions = ['left', 'forward', 'right']
     player = agent.DeterministicAgent(game, actions)
-    w = game._cw
-    h = game._ch
+    w = game.width
+    h = game.height
     for tx in range(w):
         for ty in range(h):
             for cx in range(w):

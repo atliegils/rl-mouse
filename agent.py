@@ -51,7 +51,7 @@ class Agent(BaseAgent):
         self.scaling = arr
 
     def is_hunger(self, value):
-        scaling_factor = (self.game.width + self.game._ch) / 2
+        scaling_factor = (self.game.width + self.game.height) / 2
         if self.cr * self.scaling[0] == value \
         or self.tr * self.scaling[1] == value:
             return False
@@ -74,7 +74,7 @@ class Agent(BaseAgent):
         y += mouse[1]
         # loop the arena
         x = (x + self.game.width) % self.game.width
-        y = (y + self.game._ch) % self.game._ch
+        y = (y + self.game.height) % self.game.height
         return x, y
 
     def get_woff(self, x, y, mouse=None):
@@ -190,7 +190,7 @@ class Agent(BaseAgent):
         return reward
 
     def calc_reward(self, reward):
-        scaling_factor = (self.game.width + self.game._ch) / 2
+        scaling_factor = (self.game.width + self.game.height) / 2
         if reward == 1:
             value = self.scaling[0] * abs(self.cr)#* scaling_factor
         elif reward == -1:
@@ -254,7 +254,7 @@ class OmniscientAgent(Agent):
             angle = 270.0
         xcheese = rotate(cheese, angle)
         xtrap = rotate(trap, angle)
-        return xcheese[0] % self.game.width, xcheese[1] % self.game._ch, xtrap[0] % self.game.width, xtrap[1] % self.game._ch
+        return xcheese[0] % self.game.width, xcheese[1] % self.game.height, xtrap[0] % self.game.width, xtrap[1] % self.game.height
 
 class DeterministicAgent(OmniscientAgent):
     def __init__(self, game, actions):
@@ -303,7 +303,7 @@ class RadiusAgent(Agent):
 
     def get_fov(self, radius=3):
         m_loc = self.game.mouse
-        cheese = (self.game.cheese[0] - m_loc[0] + self.game.width) % self.game.width, (self.game.cheese[1] - m_loc[1] + self.game._ch) % self.game._ch
+        cheese = (self.game.cheese[0] - m_loc[0] + self.game.width) % self.game.width, (self.game.cheese[1] - m_loc[1] + self.game.height) % self.game.height
         # get trap relative to mouse
         trap = (self.game.trap[0] - m_loc[0] + self.game.width) % self.game.width, (self.game.trap[1] - m_loc[1] + self.game.height) % self.game.height
         # now rotate cheese and trap around the origin depending on direction
