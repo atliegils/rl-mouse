@@ -141,15 +141,6 @@ def count_epochs(name):
     #       agent.learner.dump_policy('count_{0}'.format(x))
             with open(file_name, 'r') as fh:
                 lines = fh.read().splitlines()
-                if float(lines[-1].split(',')[8]) >= 1: # performance is not worse than expected (derived from best SARSA agent)
-                    if winning >= 9: # tests if we "won" 10+(N-10)/2 times over the last N epochs
-#                       print 'this one is winning'
-                        if args.allow_early_finish:
-                            break
-                    else:
-                        winning += 1
-                else:
-                    winning = max(0, winning - 1)
     except KeyboardInterrupt:
         print 'Quitting early...'
         pass # just stop evaluating
@@ -224,7 +215,6 @@ if __name__ == '__main__':
     parser.add_argument('--dephase', action='store_true', help=u'swap reward scalars (180\N{DEGREE SIGN} out of phase)')
     parser.add_argument('--count_epochs', action='store_true', help='run random evaluations')
     parser.add_argument('--max_epochs', type=int, metavar='MAX', default=100, help='maximum number of epochs to count to during count evaluations')
-    parser.add_argument('--allow_early_finish', action="store_true", help='allow the count to end early if the solution is good')
     parser.add_argument('--custom_training', type=int, metavar='STEPS', help='custom number of training steps per session (training only `performs` on the agent)')
     parser.add_argument('--custom_actions', type=lambda s: [item.strip() for item in s.split(',')], metavar='"left,right,forward,?",...', help='Replace solution actions with custom actions')
     parser.add_argument('--multi', type=int, metavar='N', help='number of evaluations to make (single evaluations only)')
