@@ -7,15 +7,15 @@ from learners import QLearn, SARSA
 from game import Game
 from pprint import pprint
 
-def save_policy(learner, name):
-    policy = learner.q
-    with open(name + '.policy', 'wb') as f:
-        pickle.dump(policy, f)
+def save_qtable(learner, name):
+    qtable = learner.q
+    with open(name + '.qtable', 'wb') as f:
+        pickle.dump(qtable, f)
 
-def load_policy(learner, name):
-    with open(name + '.policy', 'rb') as f:
-        policy = pickle.loads(f.read())
-        learner.q = policy
+def load_qtable(learner, name):
+    with open(name + '.qtable', 'rb') as f:
+        qtable = pickle.loads(f.read())
+        learner.q = qtable
 
 def dist_to_cheese(game):
     assert game.width == game.height, 'not a square grid'
