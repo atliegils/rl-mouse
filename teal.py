@@ -4,7 +4,7 @@ import copy
 import evaluator
 import summarizer
 import os, sys, traceback
-from game import Game
+from environment import MouseEnvironment
 
 def load_reward_profile(agent):
     if args.custom_rewards:
@@ -58,7 +58,7 @@ def count_epochs(name):
     name = convert('{0}_{1}'.format(args.grid_size, name))
     
     # game and agent setup code
-    game = Game(do_render=args.render)
+    game = MouseEnvironment(do_render=args.render)
     game.set_size(args.grid_size, args.grid_size)
     original_game = copy.copy(game)
     # fetch the agent from the provided solution

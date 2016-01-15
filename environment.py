@@ -11,7 +11,7 @@ RIGHT = 'right'
 
 _startx = _starty = 2
 
-class Game:
+class MouseEnvironment:
 
     suppressed = False
     high_score = 0

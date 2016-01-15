@@ -10,7 +10,7 @@ The solution to an exercise consists of two methods that need to be implemented.
 These are the `get_agent`, and `train` methods. See solutions/example.py.
 
 ### `get_agent`
-The `get_agent` method takes a `Game` as a parameter and should return an `Agent` (any subclass of `Agent` is fine). The returned `Agent` instance should be configured for the provided `Game`, and will be passed as a parameter into the `train` method.
+The `get_agent` method takes an `Environment` as a parameter and should return an `Agent` (any subclass of `Agent` is fine). The returned `Agent` instance should be configured for the provided `Environment`, and will be passed as a parameter into the `train` method.
 
 ### `train`
 The `train` method takes an `agent` as a parameter and performs any necessary actions to train the agent to solve the given task. Once training is completed, exploration is turned off.
@@ -79,11 +79,11 @@ Agents should implement the `perform` method, which does the following:
  
 The renderer can be found in `render.py` and uses _pygame_ to render on the screen. Currently the `render` method takes a collection of items and a score. It renders the first three items a specific color and the score in the corner.
  
-The renderer exists only for visualization and debugging purposes, and is not actually necessary. It can be disabled by providing `do_render=False` in the `Game()` constructor.
+The renderer exists only for visualization and debugging purposes, and is not actually necessary. It can be disabled by providing `do_render=False` in the `Environment`'s constructor.
 
 ## Task + Environment
 
-In this package, one game is implemented -- with three difficulty levels (essentially making it three different games).
+In this package, one environment is implemented -- a game with three difficulty levels (essentially making it three different games).
 
 The game consists of a mouse (the player, white), cheese (yellow) and a trap (red).
 The aim of the game is to accumulate as much cheese as possible and avoid touching traps.
