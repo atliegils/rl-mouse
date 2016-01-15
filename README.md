@@ -1,5 +1,11 @@
 # Toolkit for Evaluating Agents and Learners
 
+## Getting started with exercise 1
+
+TEAL allows you to evaluate agents in a game where the player controls a mouse in a grid-world. The score increases when the mouse walks into cheese (respawning the cheese elsewhere) and it decreases when the mouse walks into a trap. If the mouse walks into a trap, the mouse and items respawn at random locations.
+
+The mouse game contains the actions 'left', 'right', 'forward' and the special action '?'. The '?' action selects a random action and should not be necessary to complete exercise 1.
+
 ## Installation
 
 TEAL requires Python 2.7+. Clone or download the git repository. In order to use the plotter, `bokeh` needs to be installed. The plotter can be disabled with the `--no_plot` switch (useful if you are unable to install `bokeh`). 
@@ -15,20 +21,13 @@ The `get_agent` method takes an `Environment` as a parameter and should return a
 ### `train`
 The `train` method takes an `agent` as a parameter and performs any necessary actions to train the agent to solve the given task. Once training is completed, exploration is turned off.
 
-## Evaluating solutions
+## Evaluating solutions' learning rates
 It's important to note that due to the stochastic policies of learners, a solution can yield different evaluation results between runs.
 
-### Evaluating learning rate
-In order to evaluate how fast a solution learns how to solve a given task environment, use the `--count_epochs` switch. This will train the agent and then evaluate it until end-conditions are met (max_epochs runs or early finish).
-
-`usage: python2 teal.py <solution_name> --count_epochs [--max_epochs N] [--allow_early_finish] ...`
-
-### Evaluating a single solution (obsolete)
-To evaluate a single solution, run `teal.py` with the solution name as an argument and any optional arguments to configure the game. Usage instructions follow.
-
-`usage: python2 teal.py <solution_name> [-g GRID_SIZE] [-f FOV] ...`
+`usage: python2 teal.py <solution_name> [--grid_size N] [--max_epochs N]`
 
 ### Comparing two solutions (obsolete)
+_Note: not ready_
 Two solutions can be evaluated and plotted on the same chart for comparison. Usage instructions follow.
 `usage: python2 teal.py <solution_name> [-c OTHER_SOLUTION] [-g GRID_SIZE] [-f FOV] ...`
                        
@@ -73,6 +72,34 @@ Agents should implement the `perform` method, which does the following:
 7. Apply rewards to the learners based on the actions
 8. Return the result of step (6.)
 
+## Provided agents
+
+Some of the provided agents are listed below.
+
+### MouseAgent
+
+This agent supplies the state of the cells in a forward 'cone' to the learner. This is the 'default' agent for the Mouse game.
+
+### OmniscientMouseAgent
+
+This agent supplies the state of every cell to the learner.
+
+### DeterministicMouseAgent
+
+Instead of acting as an interface between the game and a learner, it acts as an interface between the game and a policy.
+
+### RadiusMouseAgent
+
+This agent has a limited field of view extending out to a radius from it's position.
+
+### TraceMouseAgent
+
+The `TraceMouseAgent` is just an example of how to easily add debugging information for learners.
+
+### WrapperMouseAgent
+
+The `WrapperMouseAgent` just wraps a learner in an MouseAgent but with different default parameters to the `perform` function. The perform method will modify the state based on a method that can be overwritten, `modify_state`. This can be useful if the default state space needs to be transformed.
+
 # Other components
 
 ## Renderer
@@ -96,31 +123,4 @@ A basic implementation of Pong is also included.
 # Extending the provided agents for other games
 
 The provided agents already do a lot of the heavy lifting in a generalized context. `Agent:get_fov(fov)` might need to be replaced, along with the `Agent:decide(learner)` method. The `decide` method is responsible for updating the selected action in non-chosen learners and the `get_fov` method generates a tuple based on the game state. See `agent.py`.
-
-# Appendix
-### The evaluation
-
-#### Variables
-
-##### Independent
-- Grid size
-- Field of view
-- Alpha, Gamma (learning rate & discount factor)
-- Reward profile
-
-##### Dependent
-- Learning time
-- Target steps (dependent on grid size)
-- Extra steps (dependent on agent)
-- Other evaluation metrics (deaths, timeouts, performance...)
-
-#### Arguments (for the evaluation software)
-- Output file name
-- Dephase (first train it to learn the opposite of the task)
-- Solution (mandatory)
-- Comparison solution
-- Grid size
-- Field of view base size
-- Gamma (discount factor)
-- Reward profile
 

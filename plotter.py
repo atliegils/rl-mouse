@@ -20,8 +20,8 @@ def get_data(fn):
 def counter_plot(fn, display=True):
     base_fn = fn[:fn.find('.txt')]
     output_file(base_fn + '.html', title=base_fn)
-    score, deaths, timeouts, accumulated, _, local_deaths, extra_steps, ratio, _ = get_data(fn)
-    x = range(len(score))
+    deaths, timeouts, ratio, accumulated, extra_steps = get_data(fn)
+    x = range(len(deaths))
     p = figure(title=base_fn, x_axis_label='evaluation', y_axis_label='count', plot_width=1000)
     p.extra_y_ranges = {'reward': Range1d(start=min(0, min(accumulated)*1.05), end=max(0, max(accumulated)*1.05)), 'ratio': Range1d(start=0, end=1.1)}
     p.add_layout(LinearAxis(y_range_name='reward', axis_label='reward'), 'right')
@@ -78,3 +78,4 @@ def compare_evals(fn1, fn2):
     p.line(x, y1[4], color=colors[0], alpha=0.5, y_range_name='reward')
     p.line(x, y2[4], color=colors[1], alpha=0.5, y_range_name='reward')
     show(p)
+

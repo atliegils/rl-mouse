@@ -140,7 +140,8 @@ def random_evaluate(player, runs=200, round_limit=300, name='rand_eval'):
         target_steps += target_distance
     # create data point
     ratio = float(target_steps) / (extra_steps + target_steps)
-    data_point = (player.game.score, deaths, timeouts, player.accumulated, 0, local_deaths, extra_steps, ratio, 0)
+    data_point = (deaths, timeouts, ratio, player.accumulated, extra_steps)
+#   data_point = (player.game.score, deaths, timeouts, player.accumulated, 0, local_deaths, extra_steps, ratio, 0)
     # save data point
     data.append(data_point)
     dirname = os.path.dirname(outfile)
@@ -148,6 +149,6 @@ def random_evaluate(player, runs=200, round_limit=300, name='rand_eval'):
         os.makedirs(dirname)
     with open(outfile, 'a') as f:
         for datum in data:
-            print 'writing:',','.join(map(str, list(datum))) + '\n'
+            print 'writing:',',\t'.join(map(str, list(datum))) + '\n'
             f.write(','.join(map(str, list(datum))) + '\n')
     return outfile
