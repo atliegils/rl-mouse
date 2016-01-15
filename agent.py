@@ -27,7 +27,7 @@ class BaseAgent(object):
 
 
 # CAT, CHEESE AND TRAP AGENTS
-class Agent(BaseAgent):
+class MouseAgent(BaseAgent):
     def __init__(self, game, actions, exploration_rate=0.1, fov=2, learner_class=SARSA):
         self.game = game
         self.score = 0
@@ -201,7 +201,7 @@ class Agent(BaseAgent):
     def modify_state(self, state):
         return state
 
-class OmniscientAgent(Agent):
+class OmniscientMouseAgent(MouseAgent):
     def __init__(self, game, actions, exploration_rate=0.1, learner_class=SARSA):
         self.game = game
         self.score = 0
@@ -215,8 +215,8 @@ class OmniscientAgent(Agent):
         self.fov = -1
 
     def perform(self, explore=False, last_action=False, verbose=0):
-#       return Agent.perform(explore, last_action, verbose)
-        return super(OmniscientAgent, self).perform(explore, last_action, verbose)
+#       return MouseAgent.perform(explore, last_action, verbose)
+        return super(OmniscientMouseAgent, self).perform(explore, last_action, verbose)
 
     def modify_state(self, state):
         return state # fov
@@ -245,7 +245,7 @@ class OmniscientAgent(Agent):
             ty = self.game.height + ty
         return cx, cy, tx, ty
 
-class DeterministicAgent(OmniscientAgent):
+class DeterministicMouseAgent(OmniscientMouseAgent):
     def __init__(self, game, actions):
         self.game = game
         self.score = 0
@@ -277,7 +277,7 @@ class DeterministicAgent(OmniscientAgent):
 
 # Like a regular agent, but instead of seeing a cone, it sees a square around it
 # uses omniscient agent state space logic
-class RadiusAgent(Agent):
+class RadiusMouseAgent(MouseAgent):
     def __init__(self, game, actions, exploration_rate, learner_class=SARSA, fov=2):
         self.game = game
         self.score = 0
@@ -322,14 +322,14 @@ class RadiusAgent(Agent):
             return state
 
 # example utility class (extend this for debugging!)
-class TraceAgent(Agent):
+class TraceMouseAgent(MouseAgent):
     def decide(self, learner):
         action = learner.select()
         print 'selected action {0}'.format(action)
         return action
 
 # just wraps a learner in an agent so that it can perform
-class WrapperAgent(Agent):
+class WrapperMouseAgent(MouseAgent):
     def __init__(self, learner, game, fov):
         self.game = game
         self.score = 0
@@ -357,8 +357,8 @@ class WrapperAgent(Agent):
         self.reward(value)
         return reward
 
-# Agent that tracks history
-class HistoricalAgent(Agent):
+# MouseAgent that tracks history
+class HistoricalMouseAgent(MouseAgent):
     def __init__(self, game, actions, levels=2, exploration_rate=0.1, fov=2, learner_class=SARSA):
         self.learners = []
         self.learner_class = learner_class
@@ -469,7 +469,7 @@ class HistoricalAgent(Agent):
                     pprint(s.q)
                     print 'S{0} rewarded with {1}.'.format(s, value)
 
-class MetaAgent(Agent):
+class MetaMouseAgent(MouseAgent):
     def __init__(self, game, actions, levels=2, exploration_rate=0.1, fov=2, learner_class=SARSA):
         self.game = game
         self.score = 0
@@ -556,8 +556,8 @@ class MetaAgent(Agent):
         if not self.learning: return
         self.learner.learn(value, self.next_states)
 
-# Like MetaAgent, but set the state of the top level agent to 1/0 depending on if it can see cheese
-class CheeseMeta(MetaAgent):
+# Like MetaMouseAgent, but set the state of the top level agent to 1/0 depending on if it can see cheese
+class CheeseMeta(MetaMouseAgent):
     def set_states(self, last_action=False):
         # active state
         state_left = self.get_fov(self.fov)

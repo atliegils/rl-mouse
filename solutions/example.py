@@ -5,10 +5,10 @@ import agent
 def get_agent(game):
     """Modify this method to create the appropriate agent"""
     actions = ['left', 'forward', 'right']
-    # Use a MetaAgent with QLearners at leaf nodes
-    player = agent.MetaAgent(game, actions, exploration_rate=0.1, fov=3, learner_class=learners.QLearn)
-    # Use a flat Agent with the default SARSA learner
-#   player = agent.Agent(game, actions, epsilon=0.1, fov=3)
+    # Use a MetaMouseAgent with QLearners at leaf nodes
+    player = agent.MetaMouseAgent(game, actions, exploration_rate=0.1, fov=3, learner_class=learners.QLearn)
+    # Use a flat MouseAgent with the default SARSA learner
+#   player = agent.MouseAgent(game, actions, epsilon=0.1, fov=3)
     return player
 
 

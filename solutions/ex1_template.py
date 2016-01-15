@@ -5,7 +5,7 @@ def get_agent(game):
     """Modify this method to create the appropriate agent"""
     assert game.width == game.height, 'not a square grid'
     actions = ['left', 'forward', 'right']
-    player = agent.DeterministicAgent(game, actions)
+    player = agent.DeterministicMouseAgent(game, actions)
     w = game.width
     h = game.height
     for tx in range(w):
