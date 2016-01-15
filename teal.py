@@ -28,9 +28,7 @@ def comparison():
 
     e1 = count_epochs(args.solution_name)
     e2 = count_epochs(args.compare_to)
-    # TODO: change compare_evals
-    compare_evals(e1, e2) # TODO TODO TODO
-    # TODO  TODO TODO  TODO TODO 
+    compare_evals(e1, e2) 
 
 def convert(name):
     return name.rstrip('.py').replace(os.sep,'.').replace('solutions.','')
@@ -120,7 +118,6 @@ def count_epochs(name):
 def dephase():
     file_name = count_evals(args.solution_name)
     file_name2 = count_evals(args.solution_name, initial_training=False)
-    # TODO TODO TODO
     compare_evals(file_name, file_name2)
 
 def main():
