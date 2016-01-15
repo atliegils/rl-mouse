@@ -1,7 +1,6 @@
 #!/usr/bin/python2
 import argparse
 import os
-#import numpy as np
 from bokeh.plotting import figure, output_file, save, show
 from bokeh.models import LinearAxis, Range1d
 

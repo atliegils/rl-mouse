@@ -1,4 +1,3 @@
-import learners
 import agent
 
 # select the agent here

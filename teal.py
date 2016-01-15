@@ -5,7 +5,6 @@ import evaluator
 import summarizer
 import os, sys, traceback
 from game import Game
-from functools import partial
 
 def load_reward_profile(agent):
     if args.custom_rewards:

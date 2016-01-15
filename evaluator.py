@@ -1,11 +1,6 @@
 #!/usr/bin/python2
-import argparse
-import math, os, sys, traceback
-import agent, threading, time
+import os
 import pickle
-from learners import QLearn, SARSA
-from game import Game
-from pprint import pprint
 
 def save_qtable(learner, name):
     qtable = learner.q

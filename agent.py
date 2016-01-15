@@ -1,6 +1,4 @@
-import math, random
-import time, traceback
-from game import Game
+import math
 from learners import HistoryManager, SARSA, MetaLearner, QLearn
 
 class BaseAgent(object):
