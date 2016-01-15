@@ -21,16 +21,16 @@ It's important to note that due to the stochastic policies of learners, a soluti
 ### Evaluating learning rate
 In order to evaluate how fast a solution learns how to solve a given task environment, use the `--count_epochs` switch. This will train the agent and then evaluate it until end-conditions are met (max_epochs runs or early finish).
 
-`usage: python2 bootstrapper.py <solution_name> --count_epochs [--max_epochs N] [--allow_early_finish] ...`
+`usage: python2 teal.py <solution_name> --count_epochs [--max_epochs N] [--allow_early_finish] ...`
 
 ### Evaluating a single solution (obsolete)
-To evaluate a single solution, run `bootstrapper.py` with the solution name as an argument and any optional arguments to configure the game. Usage instructions follow.
+To evaluate a single solution, run `teal.py` with the solution name as an argument and any optional arguments to configure the game. Usage instructions follow.
 
-`usage: python2 bootstrapper.py <solution_name> [-g GRID_SIZE] [-f FOV] ...`
+`usage: python2 teal.py <solution_name> [-g GRID_SIZE] [-f FOV] ...`
 
 ### Comparing two solutions (obsolete)
 Two solutions can be evaluated and plotted on the same chart for comparison. Usage instructions follow.
-`usage: python2 bootstrapper.py <solution_name> [-c OTHER_SOLUTION] [-g GRID_SIZE] [-f FOV] ...`
+`usage: python2 teal.py <solution_name> [-c OTHER_SOLUTION] [-g GRID_SIZE] [-f FOV] ...`
                        
 
 # Documentation
@@ -98,7 +98,7 @@ A basic implementation of Pong is also included.
 The provided agents already do a lot of the heavy lifting in a generalized context. `Agent:get_fov(fov)` might need to be replaced, along with the `Agent:decide(learner)` method. The `decide` method is responsible for updating the selected action in non-chosen learners and the `get_fov` method generates a tuple based on the game state. See `agent.py`.
 
 # Appendix
-### The evaluation bootstrapper
+### The evaluation
 
 #### Variables
 
