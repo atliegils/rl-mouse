@@ -28,7 +28,10 @@ def summarize(name): # summarizes a normal (count_epochs) run
     print 'Recent deaths: {0}'.format(deaths)
     print 'Recent timeouts: {0}'.format(timeouts)
     print 'Recent extra steps: {0}'.format(extra_steps)
-    magic = (float(sum(accums)) / max(1,extra_steps)) + average_ratio
+    if extra_steps == 0:
+        magic = float('inf')
+    else:
+        magic = (float(sum(accums)) / extra_steps) + average_ratio
     print 'Evaluation score: {0}'.format(magic)
     print '\t',
 #   if magic < 100 or timeouts > 100 or accumulated_reward < 0 or average_ratio < 0.3:
