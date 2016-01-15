@@ -34,7 +34,7 @@ def counter_plot(fn, display=True):
     p.triangle(x, y[7], color='black', alpha=1, size=5, y_range_name='ratio', legend='ratio')    # ratio
     p.triangle(x, y[8], color='teal', alpha=1, size=5, y_range_name='ratio', legend='performance')    # performance
     p.line(x, y[3], color='blue', y_range_name='reward', legend='reward')    # accumul. reward
-    p.y_range = Range1d(0, max(max(y[1]),max(y[2]))*1.10)
+    p.y_range = Range1d(0, max(max(y[1]),max(y[2]),1)*1.10)
     p.x_range = Range1d(0, int(1.2*len(y[0]))) # create room for legend
 
     if display:
