@@ -17,8 +17,8 @@ def summarize(name): # summarizes a normal (count_epochs) run
             parts = map(float, line.split(',')) # score, deaths, timeout, accumulated, 0, local detahs, extra steps, ratio, performance
             deaths      += parts[0]
             timeouts    += parts[1]
-            accums.append (parts[2])
-            ratios.append (parts[3])
+            ratios.append (parts[2])
+            accums.append (parts[3])
             extra_steps += parts[4]
 
     average_ratio = avg(ratios)
@@ -31,11 +31,10 @@ def summarize(name): # summarizes a normal (count_epochs) run
     if extra_steps == 0:
         magic = float('inf')
     else:
-        magic = (float(sum(accums)) / extra_steps) + average_ratio
+        magic = (float(sum(accums) - (timeouts * 5) - deaths) / extra_steps) + average_ratio
     print 'Evaluation score: {0}'.format(magic)
     print '\t',
-#   if magic < 100 or timeouts > 100 or accumulated_reward < 0 or average_ratio < 0.3:
-    if magic <= 0.30:
+    if magic <= 0.55:
         print 'FAIL'
     else:
         print 'PASS'
