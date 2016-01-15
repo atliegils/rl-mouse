@@ -59,23 +59,35 @@ def pong_plot(fn, display=True):
 def compare_evals(fn1, fn2):
     assert fn1, 'fn1 is a {0}'.format(type(fn1))
     assert fn2, 'fn2 is a {0}'.format(type(fn2))
-    base_fn = fn1[:fn1.find('.txt')], fn2[:fn2.find('.txt')]
+    base_fn = fn1[1+fn1.rfind(os.sep):fn1.find('.txt')], fn2[1+fn2.rfind(os.sep):fn2.find('.txt')]
     title=base_fn[0] + ' vs ' + base_fn[1]
     y1 = get_data(fn1)
     y2 = get_data(fn2)
-    output_file('comparisons'+os.sep+base_fn[0][base_fn[0].find(os.sep)+1:]+'vs'+base_fn[1][base_fn[1].find(os.sep)+1:]+'.html', title=title)
-    x = range(len(y1[0]))
+    accumulated = []
+    accumulated.extend(y1[3])
+    accumulated.extend(y2[3])
+    deaths = []
+    deaths.extend(y1[0])
+    deaths.extend(y2[0])
+    timeouts = []
+    timeouts.extend(y1[1])
+    timeouts.extend(y2[1])
+    output_file('comparisons'+os.sep+title+'.html', title=title)
+    x = range(min(len(y1[0]), len(y2[0])))
     colors = ['teal', 'orange']
-    p = figure(title=title, x_axis_label='evaluation', y_axis_label='score', plot_width=1000)
-    p.extra_y_ranges = {'reward': Range1d(start=min(0, min(y1[4]), min(y2[4]))*1.05, end=max(0, max(y1[4]), max(y2[4]))*1.05)}
+    p = figure(title=title, x_axis_label='evaluation', y_axis_label='count', plot_width=1000)
+    p.extra_y_ranges = {'reward': Range1d(start=min(0, min(accumulated)*1.05), end=max(0, max(accumulated)*1.05)), 'ratio': Range1d(start=0, end=1.1)}
     p.add_layout(LinearAxis(y_range_name='reward', axis_label='reward'), 'right')
-    p.circle(x, y1[6], color=colors[0], alpha=0.5, size=3)
-    p.circle(x, y2[6], color=colors[1], alpha=0.5, size=3)
-    p.triangle(x, y1[5], color=colors[0], alpha=0.3, size=2)
-    p.triangle(x, y2[5], color=colors[1], alpha=0.3, size=2)
-    p.inverted_triangle(x, y1[2], color=colors[0], alpha=0.3, size=2)
-    p.inverted_triangle(x, y2[2], color=colors[1], alpha=0.3, size=2)
-    p.line(x, y1[4], color=colors[0], alpha=0.5, y_range_name='reward')
-    p.line(x, y2[4], color=colors[1], alpha=0.5, y_range_name='reward')
+    p.add_layout(LinearAxis(y_range_name='ratio', axis_label='ratio'), 'left')
+    p.circle(x, y1[0], color='red', alpha=0.8, size=5, legend='deaths1')     # deaths
+    p.square(x, y1[1], color='blue', alpha=0.8, size=5, legend='timeouts1')   # timeouts
+    p.triangle(x, y1[2], color='black', alpha=1, size=5, y_range_name='ratio', legend='ratio1')    # ratio
+    p.line(x, y1[3], color='blue', y_range_name='reward', legend='reward1')    # accumul. reward
+    p.circle(x, y2[0], color='green', alpha=0.8, size=5, legend='deaths2')     # deaths
+    p.square(x, y2[1], color='orange', alpha=0.8, size=5, legend='timeouts2')   # timeouts
+    p.triangle(x, y2[2], color='teal', alpha=1, size=5, y_range_name='ratio', legend='ratio2')    # ratio
+    p.line(x, y2[3], color='orange', y_range_name='reward', legend='reward2')    # accumul. reward
+    p.y_range = Range1d(0, max(max(deaths),max(timeouts),1)*1.10)
+    p.x_range = Range1d(0, int(1.2*len(x))) # create room for legend
     show(p)
 
