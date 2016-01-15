@@ -1,46 +1,7 @@
 def avg(arr):
     return sum(arr)/len(arr)
 
-def sum_sum(names):
-    assert(names)
-    all_performances  = []
-    worst_performance = 1.0
-    best_performance  = 0.0
-    total_extra       = 0.0
-    least_extra       = float('inf')
-    most_extra        = 0.0
-    least_timeouts    = float('inf')
-    most_timeouts     = 0.0
-    least_deaths      = float('inf')
-    most_deaths       = 0.0
-    magics = []
-    for name in names:
-        _, _, _, d, t, es, ar, _, m = summarize_e(name)
-        # performance
-        worst_performance = min(ar, worst_performance)
-        best_performance = max(ar, best_performance)
-        all_performances.append(ar)
-        # extra steps
-        least_extra = min(es, least_extra)
-        most_extra = max(es, most_extra)
-        # timeouts
-        least_timeouts = min(t, least_timeouts)
-        most_timeouts = max(t, most_timeouts)
-        # deaths
-        least_deaths = min(d, least_deaths)
-        most_deaths = max(d, most_deaths)
-        magics.append(m)
-    average_performance = sum(all_performances)/len(all_performances)
-    print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-    print 'Summary report for {0} evaluations:'.format(len(names))
-    print 'Performance: MIN {0} || MAX {1} || AVG {2}'.format(worst_performance, best_performance, average_performance)
-    print 'Extra steps: MIN {0} || MAX {1}'.format(least_extra, most_extra)
-    print 'Timeouts   : MIN {0} || MAX {1}'.format(least_timeouts, most_timeouts)
-    print 'Deaths     : MIN {0} || MAX {1}'.format(least_deaths, most_deaths)
-    print 'Eval score : MIN {0} || MAX {1} || AVG {2}'.format(min(magics), max(magics), sum(magics)/len(magics))
-    print '_____________________________________________________'
-
-def summarize_ec(name):
+def summarize(name): # summarizes a normal (count_epochs) run
     print '========================'
     print 'count {0} end summary:'.format(name)
     deaths = 0
@@ -80,7 +41,46 @@ def summarize_ec(name):
         print 'PASS'
     return (average_accum, average_ratio, average_perfs, deaths, timeouts, extra_steps, magic)
 
-def summarize_e(name):
+def summarize_multiple_evaluations(names):
+    assert(names)
+    all_performances  = []
+    worst_performance = 1.0
+    best_performance  = 0.0
+    total_extra       = 0.0
+    least_extra       = float('inf')
+    most_extra        = 0.0
+    least_timeouts    = float('inf')
+    most_timeouts     = 0.0
+    least_deaths      = float('inf')
+    most_deaths       = 0.0
+    magics = []
+    for name in names:
+        _, _, _, d, t, es, ar, _, m = summarize_evaluation(name)
+        # performance
+        worst_performance = min(ar, worst_performance)
+        best_performance = max(ar, best_performance)
+        all_performances.append(ar)
+        # extra steps
+        least_extra = min(es, least_extra)
+        most_extra = max(es, most_extra)
+        # timeouts
+        least_timeouts = min(t, least_timeouts)
+        most_timeouts = max(t, most_timeouts)
+        # deaths
+        least_deaths = min(d, least_deaths)
+        most_deaths = max(d, most_deaths)
+        magics.append(m)
+    average_performance = sum(all_performances)/len(all_performances)
+    print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+    print 'Summary report for {0} evaluations:'.format(len(names))
+    print 'Performance: MIN {0} || MAX {1} || AVG {2}'.format(worst_performance, best_performance, average_performance)
+    print 'Extra steps: MIN {0} || MAX {1}'.format(least_extra, most_extra)
+    print 'Timeouts   : MIN {0} || MAX {1}'.format(least_timeouts, most_timeouts)
+    print 'Deaths     : MIN {0} || MAX {1}'.format(least_deaths, most_deaths)
+    print 'Eval score : MIN {0} || MAX {1} || AVG {2}'.format(min(magics), max(magics), sum(magics)/len(magics))
+    print '_____________________________________________________'
+
+def summarize_evaluation(name):
     print '========================'
     print '{0} summary:'.format(name)
 
@@ -125,36 +125,3 @@ def summarize_e(name):
     else:
         print 'PASS'
     return (accumulated_reward, best_local, bl_round, deaths, timeouts, extra_steps, average_ratio, high_score, magic)
-
-def summarize(name):
-    print '========================'
-    print '{0} summary:'.format(name)
-    best_average = 0
-    best_local = 0
-    ba_round = 0
-    bl_round = 0
-    deaths = 0
-    timeouts = 0
-    with open(name, 'r') as f:
-        text = f.read()
-        for cur_round, line in enumerate(text.splitlines()):
-            parts = map(float, line.split(',')) # round eff, deaths, average, cumul, local
-            round_deaths = parts[1]
-            average = parts[2]
-            local = parts[4]
-            if average > best_average and cur_round > 50:
-                best_average = max(average, best_average)
-                ba_round = cur_round
-            if local > best_local:
-                best_local = max(local, best_local)
-                bl_round = cur_round
-            if round_deaths == -1:
-                timeouts += 1
-            else:
-                deaths += round_deaths
-
-    print 'Best average: {0} in round {1}'.format(best_average, ba_round)
-    print 'Best local reward: {0} in round {1}'.format(best_local, bl_round)
-    print 'Total deaths: {0}'.format(deaths)
-    print 'Total timeouts: {0}'.format(timeouts)
-    return (best_average, ba_round, best_local, bl_round, deaths, timeouts)

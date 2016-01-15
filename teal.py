@@ -113,7 +113,7 @@ def count_epochs(name):
         print 'Quitting early...'
         pass # just stop evaluating
     # print out a nice summary of how the evaluation went
-    summarizer.summarize_ec(file_name)
+    summarizer.summarize(file_name)
     return file_name
 
 # TODO: needs work
@@ -140,7 +140,7 @@ def main():
         evals.append(file_name)
         counter_plot(file_name, display=show)
     if args.multi:
-        summarizer.sum_sum(evals)
+        summarizer.summarize_multiple_evaluations(evals)
 
 def setting_configuration():
     config_lines = []
