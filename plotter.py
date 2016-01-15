@@ -20,22 +20,21 @@ def get_data(fn):
 def counter_plot(fn, display=True):
     base_fn = fn[:fn.find('.txt')]
     output_file(base_fn + '.html', title=base_fn)
-    y = get_data(fn)
-    x = range(len(y[0]))
+    score, deaths, timeouts, accumulated, _, local_deaths, extra_steps, ratio, _ = get_data(fn)
+    x = range(len(score))
     p = figure(title=base_fn, x_axis_label='evaluation', y_axis_label='count', plot_width=1000)
-    p.extra_y_ranges = {'reward': Range1d(start=min(0, min(y[3])*1.05), end=max(0, max(y[3])*1.05)), 'ratio': Range1d(start=0, end=1.1*max(1, max(max(y[7]), max(y[8]))))}
+    p.extra_y_ranges = {'reward': Range1d(start=min(0, min(accumulated)*1.05), end=max(0, max(accumulated)*1.05)), 'ratio': Range1d(start=0, end=1.1)}
     p.add_layout(LinearAxis(y_range_name='reward', axis_label='reward'), 'right')
     p.add_layout(LinearAxis(y_range_name='ratio', axis_label='ratio'), 'left')
-#  p.add_layout(LinearAxis(y_range_name='ratio'), 'right')
-#   p.circle(x, y[6], color='teal', alpha=0.5, size=3, legend='+steps')      # extra steps
-#   p.circle(x, y[0], color='teal', alpha=0.5, size=0.5, legend='score')    # score
-    p.circle(x, y[1], color='red', alpha=0.8, size=2, legend='deaths')     # deaths
-    p.circle(x, y[2], color='black', alpha=0.8, size=2, legend='timeouts')   # timeouts
-    p.triangle(x, y[7], color='black', alpha=1, size=5, y_range_name='ratio', legend='ratio')    # ratio
-    p.triangle(x, y[8], color='teal', alpha=1, size=5, y_range_name='ratio', legend='performance')    # performance
-    p.line(x, y[3], color='blue', y_range_name='reward', legend='reward')    # accumul. reward
-    p.y_range = Range1d(0, max(max(y[1]),max(y[2]),1)*1.10)
-    p.x_range = Range1d(0, int(1.2*len(y[0]))) # create room for legend
+    # p.circle(x, extra_steps, color='teal', alpha=0.5, size=3, legend='+steps')      # extra steps
+    # p.circle(x, score, color='teal', alpha=0.5, size=0.5, legend='score')    # score
+    p.circle(x, deaths, color='red', alpha=0.8, size=5, legend='deaths')     # deaths
+    p.square(x, timeouts, color='blue', alpha=0.8, size=5, legend='timeouts')   # timeouts
+    p.triangle(x, ratio, color='black', alpha=1, size=5, y_range_name='ratio', legend='ratio')    # ratio
+    # p.triangle(x, performance, color='teal', alpha=1, size=5, y_range_name='ratio', legend='performance')    # performance
+    p.line(x, accumulated, color='blue', y_range_name='reward', legend='reward')    # accumul. reward
+    p.y_range = Range1d(0, max(max(deaths),max(timeouts),1)*1.10)
+    p.x_range = Range1d(0, int(1.2*len(x))) # create room for legend
 
     if display:
         show(p)
