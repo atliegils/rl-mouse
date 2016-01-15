@@ -187,7 +187,7 @@ if __name__ == '__main__':
     do_initializations()
     try:
         if not args.no_plot:
-            from plotter import evaluation_plot, compare_evals, counter_plot
+            from plotter import compare_evals, counter_plot
         if args.compare_to:
             comparison()
         elif args.dephase:

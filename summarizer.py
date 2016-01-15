@@ -1,4 +1,3 @@
-import argparse
 def avg(arr):
     return sum(arr)/len(arr)
 
@@ -159,30 +158,3 @@ def summarize(name):
     print 'Total deaths: {0}'.format(deaths)
     print 'Total timeouts: {0}'.format(timeouts)
     return (best_average, ba_round, best_local, bl_round, deaths, timeouts)
-
-def make_plot(bav, bar, blv, blr, dts, tos):
-    raise Exception('Not implemented')
-
-def main():
-    global args
-    for fn in args.names:
-        data = summarize_e(fn)
-        if args.plot:
-            make_plot(*data)
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='graph plotter')
-    parser.add_argument('names', nargs='+', help='input file name(s)')
-#   parser.add_argument('--plot', help='plot results')
-    args = parser.parse_args()
-    args.plot = None
-    try:
-        main()
-    except KeyboardInterrupt:
-        pass
-    except SystemExit:
-        pass
-    except Exception as e:
-        print 'error', e
-        raise
-
