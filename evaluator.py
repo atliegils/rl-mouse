@@ -73,43 +73,64 @@ def train(player, learner, max_runs=10000):
 
 def dist_to_cheese(game):
     assert game.width == game.height, 'not a square grid'
-    gz = game.width
-    max_len = (gz + 1) / 2 # looped grid
-    mouse = game.mouse
-    cheese = game.cheese
-    dx = mouse[0] - cheese[0]
-    dy = mouse[1] - cheese[1]
-    direct = abs(dx) + abs(dy)
-    # mouse could go through walls, consider extra options
-    distances = [direct] 
-    xs = []
-    ys = []
-    def align(x):
-        return (x + gz) % gz
-    for i in xrange(gz):
-        dx = align(i + mouse[0]) - align(i + cheese[0])
-        dy = align(i + mouse[1]) - align(i + cheese[1])
-        xs.append(abs(dx))
-        ys.append(abs(dy))
-#   result = min(xs) + min(ys)
-#   dist = 2 * args.grid_size - max(mouse[0], cheese[0]) + min(mouse[0], cheese[0]) - max(mouse[1], cheese[1]) + min(mouse[1], cheese[1])
-    ddx = min(xs)
-    ddy = min(ys)
-    dist = ddx + ddy;
-    add = 0
-    # add 2 to the distance IFF direction is opposite
-#   if ddx == 0 or ddy == 0:
-    if dx == 0 or dy == 0 and gz > 3:
-        if game.direction == 'up' and mouse[1] + 1 == cheese[1]:
-            add = 2
-        elif game.direction == 'down' and mouse[1] - 1 == cheese[1]:
-            add = 2
-        elif game.direction == 'left' and mouse[0] + 1 == cheese[0]:
-            add = 2
-        elif game.direction == 'right' and mouse[0] - 1 == cheese[0]:
-            add = 2
+    cheese_x, cheese_y = game.get_relative_location(game.cheese)
+    trap_x, trap_y = game.get_relative_location(game.trap)
+    size = game.width
 
-    return min(dist + add, max_len)
+    if cheese_x == 0 and cheese_y == 0:
+        return 0
+    elif abs(trap_x) > 1 and trap_y != 0: # easy check to see the trap is definitely not in the way
+        dx = abs(cheese_x)
+        dy = abs(cheese_y)
+        if dx == 0 and cheese_y < 0:
+            # if the cheese is straight behind the mouse, is it faster to turn
+            # around or walk straight around the (circular) grid?
+            dy = min(2 - cheese_y, size + cheese_y)
+        return dx + dy
+    elif cheese_x == 0: # cheese in current lane
+        # how far is it if we turn around? we can do left or right, so a single trap won't be a problem
+        turn_dist = 2 + (-cheese_y if cheese_y < 0 else (size + cheese_y))
+        if turn_dist < cheese_y:
+            return turn_dist
+
+        if cheese_y > 0:
+            straight_dist = cheese_y
+            if trap_x == 0 and 0 < trap_y < cheese_y:
+                straight_dist += 2
+        else:
+            straight_dist = size + cheese_y
+            if trap_x == 0 and (0 < trap_y <= size / 2 or trap_y < cheese_y):
+                straight_dist += 2
+        return min(straight_dist, turn_dist)
+    elif cheese_y > 0 or cheese_x == size / 2 and size % 2 == 0:
+        # moving up and to side (or side and up)
+        # or moving left and right is same distance
+        return abs(cheese_y) + abs(cheese_x)
+    elif cheese_y == 0: # cheese to left or right or one row behind
+        dist = abs(cheese_x)
+        if (trap_y == 0 # trap on same horizontal lane
+            and abs(trap_x) < abs(cheese_x) # trap is closer
+            and trap_x * cheese_x > 0): # trap is on the same side
+
+            if size % 2 == 1 and abs(cheese_x) == size / 2:
+                dist += 1 # walk around. if width is even this takes 0 steps (already handled above) or 2
+            else:
+                dist += 2
+        return dist
+    else: # at this point we know that the cheese is behind the mouse
+        dist = abs(cheese_x) + abs(cheese_y)
+        if (trap_x * cheese_x > 0         # cheese and trap on the same side
+            and abs(trap_x) == 1          # trap is one step to left/right
+            and (trap_y == 0              # and next to the mouse
+                 or trap_y < 0            # or the trap is also behind
+                 and abs(cheese_x) == 1   # and the mouse is in the same lane
+                 and trap_y > cheese_y)): # and the trap is closer than the cheese
+
+            if size % 2 == 1 and (abs(cheese_x) == size / 2 or abs(cheese_y) == size / 2):
+                dist += 1 # walk around. if width is even this takes 0 steps (already handled above) or 2
+            else:
+                dist += 2
+        return dist
 
 def benchmark(player, max_runs=5000):
     player.game.suppressed = True

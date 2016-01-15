@@ -112,9 +112,9 @@ class Game:
             pass
         # move it forward
         if self.direction   == UP:
-            self.mouse = (self.mouse[0], self.mouse[1] - 1)
-        elif self.direction == DOWN:
             self.mouse = (self.mouse[0], self.mouse[1] + 1)
+        elif self.direction == DOWN:
+            self.mouse = (self.mouse[0], self.mouse[1] - 1)
         elif self.direction == LEFT:
             self.mouse = (self.mouse[0] - 1, self.mouse[1])
         elif self.direction == RIGHT:
@@ -175,9 +175,10 @@ class Game:
         Resulting coordinates x,y are in the range [-(width-1)/2,width/2]
          and [-(height-1)/2,height/2] and signify how far the item is
          in front and to the right of the mouse."""
+        # print 'get_relative_location ', item, self.mouse
 
         # get object relative to mouse
-        item = (item[0] - self.mouse[0]), -(item[1] - self.mouse[1])
+        item = (item[0] - self.mouse[0]), (item[1] - self.mouse[1])
 
         # rotate
         direction = self.direction
@@ -198,4 +199,5 @@ class Game:
         item = item[0] % self.width, item[1] % self.height
         x = item[0] if item[0] <= self.width / 2 else item[0] - self.width
         y = item[1] if item[1] <= self.height / 2 else item[1] - self.height
+        # print 'get_relative_location ', (x,y)
         return x, y
