@@ -1,16 +1,6 @@
 import random
 import math
 
-# Constants
-FPS = 15
-# action constants
-UP    = 'up'
-DOWN  = 'down'
-LEFT  = 'left'
-RIGHT = 'right'
-
-_startx = _starty = 2
-
 class MouseEnvironment:
 
     suppressed = False
@@ -45,7 +35,7 @@ class MouseEnvironment:
             pygame.quit()
 
     def reset(self):
-        self.direction = RIGHT
+        self.direction = 'right'
         if not self.easy:
             self.trap   = self.random_location()
         self.mouse  = self.random_location()
@@ -111,13 +101,13 @@ class MouseEnvironment:
         else: # forward
             pass
         # move it forward
-        if self.direction   == UP:
+        if self.direction   == 'up':
             self.mouse = (self.mouse[0], self.mouse[1] + 1)
-        elif self.direction == DOWN:
+        elif self.direction == 'down':
             self.mouse = (self.mouse[0], self.mouse[1] - 1)
-        elif self.direction == LEFT:
+        elif self.direction == 'left':
             self.mouse = (self.mouse[0] - 1, self.mouse[1])
-        elif self.direction == RIGHT:
+        elif self.direction == 'right':
             self.mouse = (self.mouse[0] + 1, self.mouse[1])
 
         # loop the arena
