@@ -140,10 +140,19 @@ def main():
         summarizer.summarize_multiple_evaluations(evals)
 
 def setting_configuration():
+    def filter_cname(text):
+        import re
+        matches = re.findall(r'--[a-zA-Z\_]*', text)
+        for match in matches:
+            target = match
+            replacement = match[2:5]
+            text = text.replace(target, replacement)
+        return text
     config_lines = []
     for arg in vars(args):
         config_lines.append('{0}: {1}'.format(arg, getattr(args, arg)))
     config_name = '+'.join(sys.argv[1:]).strip('.').strip(os.sep)
+    config_name = filter_cname(config_name)
 
     return config_name, '\n'.join(config_lines)+'\n'
 
