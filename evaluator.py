@@ -12,6 +12,11 @@ def load_qtable(learner, name):
         qtable = pickle.loads(f.read())
         learner.q = qtable
 
+def dist_to_ridge_goal(game):
+    mx, my = game.mouse
+    gx, gy = game.cheese
+    return abs(mx-gx) + abs(my-gy)
+
 def dist_to_cheese(game):
     assert game.width == game.height, 'not a square grid'
     cheese_x, cheese_y = game.get_relative_location(game.cheese)
@@ -104,7 +109,9 @@ def pong_evaluate(player, runs=200, name='pong_eval', max_count=3000):
         f.write('{0},{1}'.format(wins, loss) + '\n')
     return outfile, wins, loss
 
-def random_evaluate(player, runs=200, round_limit=300, name='rand_eval'):
+def random_evaluate(player, runs=200, round_limit=300, name='rand_eval', distance=None):
+    if not distance:
+        distance = dist_to_cheese
     target_limit = player.game.width * player.game.height / 2
     if target_limit > round_limit:
         round_limit = target_limit
@@ -122,7 +129,7 @@ def random_evaluate(player, runs=200, round_limit=300, name='rand_eval'):
         current_step = 0
         local_deaths = 0
         player.reset_game()
-        target_distance = dist_to_cheese(player.game)
+        target_distance = distance(player.game)
         while current_step < round_limit:
             current_step += 1
             player.game.render()

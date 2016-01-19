@@ -219,13 +219,13 @@ class RidgeEnvironment(MouseEnvironment):
     def play(self, action):
         x, y = self.mouse
         if action == 'left':
-            x = math.max(x-1, 0)
+            x = max(x-1, 0)
         elif action == 'right':
-            x = math.min(x+1, self.width-1)
+            x = min(x+1, self.width-1)
         elif action == 'up':
-            y = math.max(y-1, 0)
+            y = max(y-1, 0)
         elif action == 'down':
-            y = math.min(y+1, self.height-1)
+            y = min(y+1, self.height-1)
         self.mouse = x, y
         # update score here because it's easy
         if y == 0 and (x > 0 or x < self.width-1): # death

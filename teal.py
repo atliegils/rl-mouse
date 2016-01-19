@@ -4,7 +4,7 @@ import copy
 import evaluator
 import summarizer
 import os, sys, traceback
-from environment import MouseEnvironment
+from environment import MouseEnvironment, RidgeEnvironment
 
 def load_reward_profile(agent):
     if args.custom_rewards:
@@ -56,8 +56,14 @@ def count_epochs(name):
     name = convert('{0}_{1}'.format(args.grid_size, name))
     
     # game and agent setup code
-    game = MouseEnvironment(do_render=args.render)
-    game.set_size(args.grid_size, args.grid_size)
+    if args.environment == 'ridge':
+        game = RidgeEnvironment(do_render=args.render)
+        game.set_size(args.grid_size, 3)
+        dist_func = evaluator.dist_to_ridge_goal
+    else:
+        game = MouseEnvironment(do_render=args.render)
+        game.set_size(args.grid_size, args.grid_size)
+        dist_func = evaluator.dist_to_cheese
     original_game = copy.copy(game)
     # fetch the agent from the provided solution
     agent = fetch_agent(exercise, game)
@@ -102,7 +108,7 @@ def count_epochs(name):
             load_reward_profile(agent)
             # evaluate the training results
             print 'evaluation {0}'.format(x)
-            file_name = evaluator.random_evaluate(agent, runs=200, name=target_filename)
+            file_name = evaluator.random_evaluate(agent, runs=200, name=target_filename, distance=dist_func)
     #       This is a space hog, I don't have harddrive space to save policies - throstur
     #       agent.learner.dump_policy('count_{0}'.format(x))
             with open(file_name, 'r') as fh:
@@ -189,7 +195,11 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, metavar='N', default=0, help='random seed (0 means system time)')
     parser.add_argument('--render', action='store_true', help='render the evaluation (not recommended, greatly affects performance)')
     parser.add_argument('--no_plot', action='store_true', help='disable plotting')
+    parser.add_argument('--environment', help='the name of the environment (mouse or ridge)')
+
     args = parser.parse_args()
+    if not args.environment:
+        args.environment = 'mouse'
     do_initializations()
     try:
         if not args.no_plot:

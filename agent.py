@@ -590,7 +590,6 @@ class RidgeAgent(MouseAgent):
         self.learning = True
 
     def perform(self):
-        self.verbose = verbose
         state_now = self.game.mouse
         self.learner.set_state(self.modify_state(state_now)) # sets all states
         final_action = self.decide(self.learner)
