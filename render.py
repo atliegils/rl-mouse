@@ -43,6 +43,14 @@ class Renderer:
         self.draw_score(score) # draw the score
         pygame.display.update()
 
+    def render_custom(self, item_pairs, score):
+        self.display.fill(BGCOLOR)
+        self.draw_grid()
+        for loc, color in item_pairs:
+            self.draw_item(loc, color)
+        self.draw_score(score) # draw the score
+        pygame.display.update()
+
     def draw_item(self, item, color):
         c = self._cc
         x = item[0] * c
