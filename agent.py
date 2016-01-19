@@ -580,3 +580,26 @@ class CheeseMeta(MetaMouseAgent):
             decision = self._decide(self.learner.left_learner)
         return decision
 
+class RidgeAgent(MouseAgent):
+    def __init__(self, game, actions, exploration_rate=0.1, learner_class=SARSA):
+        self.game = game
+        self.score = 0
+        self.accumulated = 0
+        self.learner_class = learner_class
+        self.learner = learner_class(actions, exploration_rate)
+        self.learning = True
+
+    def perform(self):
+        self.verbose = verbose
+        state_now = self.game.mouse
+        self.learner.set_state(self.modify_state(state_now)) # sets all states
+        final_action = self.decide(self.learner)
+        self.game.play(final_action)
+        reward = self.check_reward() # 1=positive, -1=negative, 0=neutral
+        value = self.calc_reward(reward)
+        self.reward(value)
+        return reward
+        
+    def check_reward(self):
+        return self.game.score
+

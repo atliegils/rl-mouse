@@ -2,7 +2,6 @@ import random
 import math
 
 class MouseEnvironment:
-
     suppressed = False
     high_score = 0
 
@@ -191,3 +190,39 @@ class MouseEnvironment:
         y = item[1] if item[1] <= self.height / 2 else item[1] - self.height
         # print 'get_relative_location ', (x,y)
         return x, y
+
+class RidgeEnvironment(MouseEnvironment):
+    def __init__(self):
+        self.width = 6
+        self.height = 3
+        self.score = 0
+        self.mouse = (0, 0)
+        self.cheese = (5, 0)
+
+    def set_size(self, w, h):
+        self.width = w
+        self.height = h
+        self.cheese = (w-1, 0)
+
+    def reset(self):
+        self.score = 0
+        self.mouse = (0, 0)
+        self.cheese = (5, 0)
+        
+    def play(self, action):
+        x, y = self.mouse
+        if action == 'left':
+            x = math.max(x-1, 0)
+        elif action == 'right':
+            x = math.min(x+1, self.width-1)
+        elif action == 'up':
+            y = math.max(y-1, 0)
+        elif action == 'down':
+            y = math.min(y+1, self.height-1)
+        self.mouse = x, y
+        # update score here because it's easy
+        if y == 0 and (x > 0 or x < self.width-1): # death
+            self.score = -1
+        elif y == 0 and x == self.width-1:
+            self.score = 1
+
