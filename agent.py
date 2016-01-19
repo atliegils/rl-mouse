@@ -602,3 +602,6 @@ class RidgeAgent(MouseAgent):
     def check_reward(self):
         return self.game.score
 
+    def get_fov(self, fov):
+        return self.game.mouse
+
