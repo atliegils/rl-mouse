@@ -217,7 +217,6 @@ class RidgeEnvironment(MouseEnvironment):
 
 
     def reset(self):
-        self.score = 0
         self.mouse = (0, 0)
         self.cheese = (5, 0)
         
@@ -234,9 +233,10 @@ class RidgeEnvironment(MouseEnvironment):
         self.mouse = x, y
         # update score here because it's easy
         if y == 0 and (x > 0 and x < self.width-1): # death
-            self.score = -1
+            self.score -= 1
+            self.reset()
         elif y == 0 and x == self.width-1:
-            self.score = 1
+            self.score += 1
 
     def render(self):
         if self.do_render:
