@@ -608,6 +608,5 @@ class RidgeAgent(MouseAgent):
 
     def decide(self, learner):
         selection = learner.select()
-        print selection
         return selection
 
