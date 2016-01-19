@@ -23,7 +23,7 @@ def summarize(name): # summarizes a normal (count_epochs) run
 
     average_ratio = avg(ratios)
     average_accum = avg(accums)
-    print 'Avarage accumulated reward: {0}'.format(average_accum)
+    print 'Average accumulated reward: {0}'.format(average_accum)
     print 'Average ratio: {0}'.format(average_ratio)
     print 'Recent deaths: {0}'.format(deaths)
     print 'Recent timeouts: {0}'.format(timeouts)
