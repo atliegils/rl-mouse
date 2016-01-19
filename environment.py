@@ -219,7 +219,7 @@ class RidgeEnvironment(MouseEnvironment):
     def reset(self):
         self.score = 0
         self.mouse = (0, 0)
-        self.cheese = (5, 0)
+        self.cheese = (self.width-1, 0)
         
     def play(self, action):
         x, y = self.mouse
