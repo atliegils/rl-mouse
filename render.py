@@ -28,11 +28,11 @@ class Renderer:
     _wh = 240
     
     def __init__(self, ww, wh):
-        self.display = pygame.display.set_mode((ww, wh))
-        self.basic_font = pygame.font.Font('freesansbold.ttf', 18)
-        pygame.display.set_caption('Mouse Game')
         self._ww = ww * self._cc
         self._wh = wh * self._cc
+        self.display = pygame.display.set_mode((self._ww, self._wh))
+        self.basic_font = pygame.font.Font('freesansbold.ttf', 18)
+        pygame.display.set_caption('Mouse Game')
 
     def render(self, items, score):
         self.display.fill(BGCOLOR)
@@ -54,7 +54,7 @@ class Renderer:
     def draw_item(self, item, color):
         c = self._cc
         x = item[0] * c
-        y = (self._wh - item[1] - 1) * c # render so that higher y coordinates are drawn higher
+        y = (item[1]) * c # render so that higher y coordinates are drawn higher
         therect = pygame.Rect(x, y, c, c)
         pygame.draw.rect(self.display, color, therect)
 
@@ -70,3 +70,4 @@ class Renderer:
             pygame.draw.line(self.display, DARKGRAY, (x, 0), (x, self._wh))
         for y in range(0, self._wh, cell_size): # draw vertical lines
             pygame.draw.line(self.display, DARKGRAY, (0, y), (self._ww, y))
+
