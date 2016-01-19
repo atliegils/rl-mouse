@@ -6,7 +6,7 @@ class MouseEnvironment:
     high_score = 0
 
     # default cell size
-    def __init__(self, do_render=True):
+    def __init__(self, do_render=False):
         self.width = 32
         self.height = 24
         self.do_render = do_render
@@ -192,12 +192,19 @@ class MouseEnvironment:
         return x, y
 
 class RidgeEnvironment(MouseEnvironment):
-    def __init__(self):
+    def __init__(self, do_render=False):
         self.width = 6
         self.height = 3
         self.score = 0
         self.mouse = (0, 0)
         self.cheese = (5, 0)
+        self.do_render = do_render
+        if self.do_render:  #   BIG RED NOTICE HERE
+            global pygame   # -----------------------
+            global render   # Only import into global
+            import pygame   #    namespace if the
+            import render   #   render flag is set!
+            pygame.init()
 
     def set_size(self, w, h):
         self.width = w
@@ -225,4 +232,19 @@ class RidgeEnvironment(MouseEnvironment):
             self.score = -1
         elif y == 0 and x == self.width-1:
             self.score = 1
+
+    def render(self):
+        if self.do_render:
+            items = []
+            for x in xrange(0, self.width):
+                if x == 0:
+                    color = render.WHITE
+                elif x == self.width - 1:
+                    color = render.YELLOW
+                else:
+                    color = render.RED
+                loc = (x, 0)
+                item = loc, color
+                items.append(item)
+            self.r.render_custom(items, self.score)
 
