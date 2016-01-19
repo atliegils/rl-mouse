@@ -15,7 +15,10 @@ def load_qtable(learner, name):
 def dist_to_ridge_goal(game):
     mx, my = game.mouse
     gx, gy = game.cheese
-    return abs(mx-gx) + abs(my-gy)
+    dist = abs(mx-gx) + abs(my-gy)
+    if my == gy:
+        dist += 2
+    return dist
 
 def dist_to_cheese(game):
     assert game.width == game.height, 'not a square grid'
