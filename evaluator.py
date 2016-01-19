@@ -15,10 +15,10 @@ def load_qtable(learner, name):
 def dist_to_ridge_goal(game):
     mx, my = game.mouse
     gx, gy = game.cheese
-    add = 0     # normally no detour needed
-    if my == 0: # need to take a detour
-        add = 2
-    return abs(mx-gx) + abs(my-gy) + add
+    dist = abs(mx-gx) + abs(my-gy)
+    if my == gy:
+        dist += 2
+    return dist
 
 def dist_to_cheese(game):
     assert game.width == game.height, 'not a square grid'
