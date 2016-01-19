@@ -188,7 +188,7 @@ class MouseAgent(BaseAgent):
         return reward
 
     def calc_reward(self, reward):
-        scaling_factor = float(self.game.width + self.game.height) / 2
+        scaling_factor = (self.game.width + self.game.height) / 2
         if reward == 1:
             value = self.scaling[0] * abs(self.cr)#* scaling_factor
         elif reward == -1:
