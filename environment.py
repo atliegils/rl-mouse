@@ -199,17 +199,22 @@ class RidgeEnvironment(MouseEnvironment):
         self.mouse = (0, 0)
         self.cheese = (5, 0)
         self.do_render = do_render
+        self.suppressed = False
         if self.do_render:  #   BIG RED NOTICE HERE
             global pygame   # -----------------------
             global render   # Only import into global
             import pygame   #    namespace if the
             import render   #   render flag is set!
             pygame.init()
+            self.r = render.Renderer(self.width, self.height)
 
     def set_size(self, w, h):
         self.width = w
         self.height = h
         self.cheese = (w-1, 0)
+        if self.do_render:
+            self.r = render.Renderer(self.width, self.height)
+
 
     def reset(self):
         self.score = 0
@@ -228,7 +233,7 @@ class RidgeEnvironment(MouseEnvironment):
             y = min(y+1, self.height-1)
         self.mouse = x, y
         # update score here because it's easy
-        if y == 0 and (x > 0 or x < self.width-1): # death
+        if y == 0 and (x > 0 and x < self.width-1): # death
             self.score = -1
         elif y == 0 and x == self.width-1:
             self.score = 1
@@ -236,15 +241,16 @@ class RidgeEnvironment(MouseEnvironment):
     def render(self):
         if self.do_render:
             items = []
-            for x in xrange(0, self.width):
-                if x == 0:
-                    color = render.WHITE
-                elif x == self.width - 1:
+            for x in xrange(1, self.width):
+                if x == self.width - 1:
                     color = render.YELLOW
                 else:
                     color = render.RED
                 loc = (x, 0)
-                item = loc, color
-                items.append(item)
+                if color:
+                    item = loc, color
+                    items.append(item)
+            mouse = self.mouse, render.WHITE
+            items.append(mouse)
             self.r.render_custom(items, self.score)
 
