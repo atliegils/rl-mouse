@@ -54,12 +54,14 @@ def count_epochs(name):
     # import the solution name into the global namespace as 'exercise'
     exercise = __import__(convert(name))
     name = convert('{0}_{1}'.format(args.grid_size, name))
+    no_runs = 200
     
     # game and agent setup code
     if args.environment == 'ridge':
         game = RidgeEnvironment(do_render=args.render)
         game.set_size(args.grid_size, 3)
         dist_func = evaluator.dist_to_ridge_goal
+        no_runs = 100
     else:
         game = MouseEnvironment(do_render=args.render)
         game.set_size(args.grid_size, args.grid_size)
@@ -108,7 +110,7 @@ def count_epochs(name):
             load_reward_profile(agent)
             # evaluate the training results
             print 'evaluation {0}'.format(x)
-            file_name = evaluator.random_evaluate(agent, runs=200, name=target_filename, distance=dist_func)
+            file_name = evaluator.random_evaluate(agent, runs=no_runs, name=target_filename, distance=dist_func)
     #       This is a space hog, I don't have harddrive space to save policies - throstur
     #       agent.learner.dump_policy('count_{0}'.format(x))
             with open(file_name, 'r') as fh:
@@ -117,6 +119,7 @@ def count_epochs(name):
         print 'Quitting early...'
         pass # just stop evaluating
     # print out a nice summary of how the evaluation went
+    agent.learner.dump_policy(name)
     summarizer.summarize(file_name)
     return file_name
 

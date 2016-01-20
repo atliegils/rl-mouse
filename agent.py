@@ -49,7 +49,7 @@ class MouseAgent(BaseAgent):
         self.scaling = arr
 
     def is_hunger(self, value):
-        scaling_factor = (self.game.width + self.game.height) / 2
+        scaling_factor = float(self.game.width + self.game.height) / 2
         if self.cr * self.scaling[0] == value \
         or self.tr * self.scaling[1] == value:
             return False
@@ -188,12 +188,12 @@ class MouseAgent(BaseAgent):
         return reward
 
     def calc_reward(self, reward):
-        scaling_factor = (self.game.width + self.game.height) / 2
+        scaling_factor = float(self.game.width + self.game.height) / 2
         if reward == 1:
-            value = self.scaling[0] * abs(self.cr)#* scaling_factor
+            value = self.scaling[0] * abs(self.cr)
         elif reward == -1:
-            value = self.scaling[1] * abs(self.tr)#* scaling_factor
-        else:                                     # 04-11-2015 moved scaling factor to hunger
+            value = self.scaling[1] * abs(self.tr)
+        else:                                     
             value = float(self.scaling[2] * abs(self.hr)) / scaling_factor
         return value
 
@@ -586,7 +586,7 @@ class RidgeAgent(MouseAgent):
         self.score = 0
         self.accumulated = 0
         self.learner_class = learner_class
-        self.learner = learner_class(actions, exploration_rate)
+        self.learner = learner_class(actions, exploration_rate, discount_factor=0.995)
         self.learning = True
 
     def perform(self):
@@ -595,13 +595,26 @@ class RidgeAgent(MouseAgent):
         final_action = self.decide(self.learner)
         self.game.play(final_action)
         reward = self.check_reward() # 1=positive, -1=negative, 0=neutral
-#       print 'selected {0} in position {1} and got {2}'.format(final_action, state_now, reward)
+#       print '{} -> {} -> {}'.format(state_now, final_action, reward)
         value = self.calc_reward(reward)
         self.reward(value)
         return reward
+
+    def is_hunger(self, value):
+        # disabled for this environment
+        return False
         
-#   def check_reward(self):
-#       return self.game.score
+    def calc_reward(self, reward):
+        return reward
+
+    def check_reward(self): 
+        if self.game.score > self.score:
+            self.score = self.game.score
+            return 1
+        elif self.game.score < self.score:
+            self.score = self.game.score
+            return -1
+        return 0
 
     def get_fov(self, fov):
         return self.game.mouse
