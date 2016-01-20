@@ -217,6 +217,7 @@ class RidgeEnvironment(MouseEnvironment):
 
 
     def reset(self):
+        self.score = 0
         self.mouse = (0, 0)
         self.cheese = (self.width-1, 0)
         
@@ -230,13 +231,18 @@ class RidgeEnvironment(MouseEnvironment):
             y = max(y-1, 0)
         elif action == 'down':
             y = min(y+1, self.height-1)
+#       print 'mouse was at {0}, and goes {2}'.format(self.mouse, 0, action),
         self.mouse = x, y
+#       print '-> {0}'.format(self.mouse)
         # update score here because it's easy
         if y == 0 and (x > 0 and x < self.width-1): # death
-            self.score -= 1
+            score = self.score
             self.reset()
+            self.score = score - 1
         elif y == 0 and x == self.width-1:
-            self.score += 1
+            score = self.score
+            self.reset()
+            self.score = score + 1 # got the prize
 
     def render(self):
         if self.do_render:
