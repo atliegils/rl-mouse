@@ -78,7 +78,7 @@ class BaseLearner:
     # select an action based on the current state of the learner
     def select(self):
         state = self.current_state
-        if random.random < self.exploration_rate:
+        if random.random() < self.exploration_rate:
             action = random.choice(self.actions)
         else:
             vals = [self.getQ(state, a) for a in self.actions]
