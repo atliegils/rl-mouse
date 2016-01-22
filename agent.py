@@ -375,7 +375,7 @@ class HistoricalMouseAgent(MouseAgent):
         self.dephased = False
 
     def replace_actions(self, actions):
-        self.create_learners(self.levels, exploration_rate, actions)
+        self.create_learners(self.levels, self.exploration_rate, actions)
 
     def set_exploration_rate(self, exploration_rate):
         def set_exploration_rate(learner, exploration_rate):
