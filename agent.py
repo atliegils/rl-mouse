@@ -609,15 +609,6 @@ class RidgeAgent(MouseAgent):
             return self.scaling[2] * abs(self.hr) # no scaling
         return super(RidgeAgent, self).calc_reward(outcome)
 
-    def check_reward(self): 
-        if self.game.score > self.score:
-            self.score = self.game.score
-            return 1
-        elif self.game.score < self.score:
-            self.score = self.game.score
-            return -1
-        return 0
-
     def get_fov(self, fov):
         return self.game.mouse
 
