@@ -2,12 +2,12 @@ import math
 from learners import HistoryManager, SARSA, MetaLearner, QLearn
 
 class BaseAgent(object):
-    def __init__(self, game, actions, exploration_rate=0.1, learner_class=SARSA):
+    def __init__(self, game, actions, exploration_rate=0.1, learning_rate=0.2, discount_factor=0.9, learner_class=SARSA):
         self.game = game
         self.score = 0
         self.accumulated = 0
         self.learner_class = learner_class
-        self.learner = learner_class(actions, exploration_rate)
+        self.learner = learner_class(actions, exploration_rate, learning_rate=learning_rate, discount_factor=discount_factor)
         self.learning = True
 
     def replace_actions(self, actions):
@@ -28,16 +28,11 @@ class BaseAgent(object):
 
 # CAT, CHEESE AND TRAP AGENTS
 class MouseAgent(BaseAgent):
-    def __init__(self, game, actions, exploration_rate=0.1, fov=2, learner_class=SARSA):
-        self.game = game
-        self.score = 0
+    def __init__(self, game, actions, exploration_rate=0.1, learning_rate=0.2, discount_factor=0.9, fov=2, learner_class=SARSA):
+        super(MouseAgent, self).__init__(game, actions, exploration_rate=exploration_rate, learning_rate=learning_rate, discount_factor=discount_factor, learner_class=learner_class)
+        self.fov = fov
         self.adjust_rewards( 1,  1,  0 )
         self.reward_scaling([1, -1, -1])
-        self.accumulated = 0
-        self.fov = fov
-        self.learner_class = learner_class
-        self.learner = learner_class(actions, exploration_rate)
-        self.learning = True
         self.dephased = False
 
     def adjust_rewards(self, cr, tr, hr):
@@ -202,17 +197,8 @@ class MouseAgent(BaseAgent):
         return state
 
 class OmniscientMouseAgent(MouseAgent):
-    def __init__(self, game, actions, exploration_rate=0.1, learner_class=SARSA):
-        self.game = game
-        self.score = 0
-        self.adjust_rewards( 1,  1,  0 )
-        self.reward_scaling([1, -1, -1])
-        self.accumulated = 0
-        self.learner_class = learner_class
-        self.learner = learner_class(actions, exploration_rate)
-        self.learning = True
-        self.dephased = False
-        self.fov = -1
+    def __init__(self, game, actions, exploration_rate=0.1, learning_rate=0.2, discount_factor=0.9, learner_class=SARSA):
+        super(OmniscientMouseAgent, self).__init__(game, actions, exploration_rate=exploration_rate, learning_rate=learning_rate, discount_factor=discount_factor, fov=-1, learner_class=learner_class)
 
     def perform(self, explore=False, last_action=False, verbose=0):
 #       return MouseAgent.perform(explore, last_action, verbose)
@@ -247,16 +233,7 @@ class OmniscientMouseAgent(MouseAgent):
 
 class DeterministicMouseAgent(OmniscientMouseAgent):
     def __init__(self, game, actions):
-        self.game = game
-        self.score = 0
-        self.adjust_rewards( 1,  1,  0 )
-        self.reward_scaling([1, -1, -1])
-        self.accumulated = 0
-        self.learner_class = QLearn
-        self.learner = self.learner_class(actions, 0)
-        self.learning = True
-        self.dephased = False
-        self.fov = -1
+        super(DeterministicMouseAgent, self).__init__(game, actions, learner_class=QLearn)
         self.policy = {}
 
     def perform(self, explore=False, last_action=False, verbose=0):
@@ -278,17 +255,8 @@ class DeterministicMouseAgent(OmniscientMouseAgent):
 # Like a regular agent, but instead of seeing a cone, it sees a square around it
 # uses omniscient agent state space logic
 class RadiusMouseAgent(MouseAgent):
-    def __init__(self, game, actions, exploration_rate, learner_class=SARSA, fov=2):
-        self.game = game
-        self.score = 0
-        self.adjust_rewards( 1,  1,  0 )
-        self.reward_scaling([1, -1, -1])
-        self.accumulated = 0
-        self.learner_class = learner_class
-        self.learner = learner_class(actions, exploration_rate)
-        self.learning = True
-        self.dephased = False
-        self.fov = fov # here fov = radius
+    def __init__(self, game, actions, exploration_rate=0.1, learning_rate=0.2, discount_factor=0.9, learner_class=SARSA, fov=2):
+        super(RadiusMouseAgent, self).__init__(game, actions, exploration_rate=exploration_rate, learning_rate=learning_rate, discount_factor=discount_factor, learner_class=learner_class, fov=fov)
 
     def get_fov(self, radius=3):
         m_loc = self.game.mouse
@@ -331,15 +299,8 @@ class TraceMouseAgent(MouseAgent):
 # just wraps a learner in an agent so that it can perform
 class WrapperMouseAgent(MouseAgent):
     def __init__(self, learner, game, fov):
-        self.game = game
-        self.score = 0
-        self.adjust_rewards( 1,  1,  0 )
-        self.reward_scaling([1, -1, -1])
-        self.accumulated = 0
-        self.fov = fov
+        super(WrapperMouseAgent, self).__init__(game, [], fov=fov)
         self.learner = learner
-        self.learning = True
-        self.dephased = False
 
     def perform(self, explore=False, last_action=False, verbose=0):
         self.verbose = verbose
@@ -359,20 +320,15 @@ class WrapperMouseAgent(MouseAgent):
 
 # MouseAgent that tracks history
 class HistoricalMouseAgent(MouseAgent):
-    def __init__(self, game, actions, levels=2, exploration_rate=0.1, fov=2, learner_class=SARSA):
+    def __init__(self, game, actions, levels=2, exploration_rate=0.1, learning_rate=0.2, discount_factor=0.9, learner_class=SARSA, fov=2):
+        super(HistoricalMouseAgent, self).__init__(game, actions, exploration_rate=exploration_rate, learning_rate=learning_rate, discount_factor=discount_factor, learner_class=learner_class, fov=fov)
         self.learners = []
-        self.learner_class = learner_class
-        self.game = game
-        self.score = 0
-        self.accumulated = 0
-        self.fov = fov
+        self.learner = None
         self.create_learners(levels, exploration_rate, actions)
         self.levels=levels
         self.cr = 5
         self.tr = 10
         self.hr = 1
-        self.learning = True
-        self.dephased = False
 
     def replace_actions(self, actions):
         self.create_learners(self.levels, self.exploration_rate, actions)
@@ -470,20 +426,11 @@ class HistoricalMouseAgent(MouseAgent):
                     print 'S{0} rewarded with {1}.'.format(s, value)
 
 class MetaMouseAgent(MouseAgent):
-    def __init__(self, game, actions, levels=2, exploration_rate=0.1, fov=2, learner_class=SARSA):
-        self.game = game
-        self.score = 0
-        self.accumulated = 0
-        self.fov = fov
-        self.learner_class = learner_class
-        self.exploration_rate = exploration_rate
-        self.learning_rate = 0.2
-        self.discount_factor = 0.9
+    def __init__(self, game, actions, levels=2, exploration_rate=0.1, learning_rate=0.2, discount_factor=0.9, learner_class=SARSA, fov=2):
+        super(MetaMouseAgent, self).__init__(game, actions, exploration_rate=exploration_rate, learning_rate=learning_rate, discount_factor=discount_factor, learner_class=learner_class, fov=fov)
         left  = learner_class(actions, exploration_rate)
         right = learner_class(actions, exploration_rate)
-        self.learner = MetaLearner(left, right, exploration_rate, learning_rate=0.2, discount_factor=0.9)
-        self.learning = True
-        self.dephased = False
+        self.learner = MetaLearner(left, right, exploration_rate, learning_rate=learning_rate, discount_factor=discount_factor)
 
     def replace_actions(self, actions):
         left = self.learner_class(actions, self.exploration_rate)
@@ -581,13 +528,8 @@ class CheeseMeta(MetaMouseAgent):
         return decision
 
 class RidgeAgent(MouseAgent):
-    def __init__(self, game, actions, exploration_rate=0.1, learner_class=SARSA):
-        self.game = game
-        self.score = 0
-        self.accumulated = 0
-        self.learner_class = learner_class
-        self.learner = learner_class(actions, exploration_rate, discount_factor=0.995)
-        self.learning = True
+    def __init__(self, game, actions, exploration_rate=0.1, discount_factor=0.995, learning_rate=0.1, learner_class=SARSA):
+        super(RidgeAgent, self).__init__(game, actions, exploration_rate=exploration_rate, learning_rate=learning_rate, discount_factor=discount_factor, learner_class=learner_class)
 
     def perform(self):
         state_now = self.game.mouse

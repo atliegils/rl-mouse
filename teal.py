@@ -34,7 +34,7 @@ def convert(name):
     return name.rstrip('.py').replace(os.sep,'.').replace('solutions.','')
 
 def custom_training(agent):
-    agent.set_exploration_rate(0.1)
+    # agent.set_exploration_rate(0.1) # just rely on the command line or default settings of the agent
     for i in xrange(args.custom_training):
         agent.perform()
 
@@ -44,7 +44,12 @@ def fetch_agent(exercise, game):
         agent.replace_actions(args.custom_actions)
     agent.reward_scaling([1, -1, -1])
     agent.fov = args.fov
-    agent.discount_factor = args.discount_factor
+    if 0 <= args.discount_factor <= 1:
+        agent.learner.discount_factor = args.discount_factor
+    if 0 <= args.exploration_rate <= 1:
+        agent.set_exploration_rate(args.exploration_rate)
+    if 0 <= args.learning_rate <= 1:
+        agent.learner.learning_rate = args.learning_rate
     agent.game.suppressed = True
     # train the agent using the provided solution
     load_reward_profile(agent)
@@ -102,7 +107,7 @@ def count_epochs(name):
             # clean up after training
             agent.reward_scaling([1, -1, -1])
             agent.accumulated = 0   # reset accumulated rewards
-            agent.set_exploration_rate(0.0)  # turn off exploration
+            # agent.set_exploration_rate(0.0)  # turn off exploration # or don't: let the user do it if they want
             agent.game.reset()      # reset the game
             agent.game.high_score = 0
             agent.fov  = args.fov
@@ -187,7 +192,9 @@ if __name__ == '__main__':
     parser.add_argument('--outfile', metavar='FILENAME', help='output file name')
     parser.add_argument('-g', '--grid_size', type=int, default=10, help='grid size')
     parser.add_argument('-f', '--fov', type=int, default=3, help='base field of view')
-    parser.add_argument('--discount_factor', type=float, default=0.8, metavar='FLOAT', help='discount factor')
+    parser.add_argument('--discount_factor', type=float, default=-1, metavar='FLOAT', help='discount factor [0,1]')
+    parser.add_argument('--learning_rate', type=float, default=-1, metavar='FLOAT', help='learning rate [0,1]')
+    parser.add_argument('--exploration_rate', type=float, default=-1, metavar='FLOAT', help='exploration rate [0,1]')
     parser.add_argument('-c', '--compare_to', metavar='OTHER_FILE', help='compare two solutions')
     parser.add_argument('--custom_rewards', metavar='CHEESE,TRAP,HUNGER', help='reward profile in the format "c,t,h" (without quotes)')
     parser.add_argument('--dephase', action='store_true', help=u'swap reward scalars (180\N{DEGREE SIGN} out of phase)')
@@ -198,11 +205,9 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, metavar='N', default=0, help='random seed (0 means system time)')
     parser.add_argument('--render', action='store_true', help='render the evaluation (not recommended, greatly affects performance)')
     parser.add_argument('--no_plot', action='store_true', help='disable plotting')
-    parser.add_argument('--environment', help='the name of the environment (mouse or ridge)')
+    parser.add_argument('--environment', default='mouse', help='the name of the environment (mouse or ridge)')
 
     args = parser.parse_args()
-    if not args.environment:
-        args.environment = 'mouse'
     do_initializations()
     try:
         if not args.no_plot:
