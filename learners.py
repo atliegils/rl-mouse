@@ -29,9 +29,17 @@ class BaseLearner:
             if e.errno == errno.EEXIST and os.path.isdir(target_path):
                 pass
             else: raise
-        with open('policies/' + dest + '.pol', 'w') as f:
+        with open('policies/' + dest + '.qtable', 'w') as f:
 #           pickle.dump(self.q, f)
             pprint(self.q, stream=f)
+        policy = {}
+        for state, val in self.q.iteritems():
+            actions = val.keys()
+            qs = val.values()
+            policy[state] = actions[qs.index(max(qs))]
+        with open('policies/' + dest + '.policy', 'w') as f:
+#           pickle.dump(policy, f)
+            pprint(policy, stream=f)
 
     # sets the current state of the learner and updates the last state and action
     def set_state(self, state):
