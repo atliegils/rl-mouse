@@ -558,3 +558,27 @@ class RidgeAgent(MouseAgent):
         selection = learner.select()
         return selection
 
+class DeterministicRidgeAgent(RidgeAgent):
+    def __init__(self, game, actions):
+        super(DeterministicRidgeAgent, self).__init__(game, actions, learner_class=QLearn)
+
+    def __init__(self, game, actions):
+        self.fov = -1
+        self.policy = {}
+
+    def perform(self, explore=False, last_action=False, verbose=0):
+        self.verbose = verbose
+        state_now = self.get_fov(self.fov)
+        #print state_now
+        if last_action:
+            state_now = state_now + (self.learner.current_action,)
+        self.learner.set_state(self.modify_state(state_now)) # sets all states
+        #final_action = self.decide(self.learner)
+        final_action = self.policy.get(state_now, self.learner.actions[0])
+        # print final_action
+        self.game.play(final_action)
+        outcome = self.check_outcome() # 1=positive, -1=negative, 0=neutral
+        reward = self.calc_reward(outcome)
+        self.reward(reward)
+        return outcome
+
