@@ -192,7 +192,7 @@ class MouseEnvironment:
         return x, y
 
 class RidgeEnvironment(MouseEnvironment):
-    def __init__(self, do_render=False):
+    def __init__(self, do_render=False, random_init=False):
         self.width = 6
         self.height = 3
         self.score = 0
@@ -207,6 +207,7 @@ class RidgeEnvironment(MouseEnvironment):
             import render   #   render flag is set!
             pygame.init()
             self.r = render.Renderer(self.width, self.height)
+        self.random_init = random_init
 
     def set_size(self, w, h):
         self.width = w
@@ -219,6 +220,9 @@ class RidgeEnvironment(MouseEnvironment):
     def reset(self):
         self.score = 0
         self.mouse = (0, 0)
+        if self.random_init:
+            r = random.randint(0, self.width * (self.height-1))
+            self.mouse = r % self.width, (r / self.width + 1) % self.height
         self.cheese = (self.width-1, 0)
         
     def play(self, action):
