@@ -227,9 +227,9 @@ class RidgeEnvironment(MouseEnvironment):
             x = max(x-1, 0)
         elif action == 'right':
             x = min(x+1, self.width-1)
-        elif action == 'up':
-            y = max(y-1, 0)
         elif action == 'down':
+            y = max(y-1, 0)
+        elif action == 'up':
             y = min(y+1, self.height-1)
 #       print 'mouse was at {0}, and goes {2}'.format(self.mouse, 0, action),
         self.mouse = x, y

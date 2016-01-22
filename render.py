@@ -54,7 +54,7 @@ class Renderer:
     def draw_item(self, item, color):
         c = self._cc
         x = item[0] * c
-        y = (item[1]) * c # render so that higher y coordinates are drawn higher
+        y = (self._wh/c - item[1] - 1) * c # render so that higher y coordinates are drawn higher
         therect = pygame.Rect(x, y, c, c)
         pygame.draw.rect(self.display, color, therect)
 
