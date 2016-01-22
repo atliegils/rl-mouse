@@ -146,7 +146,7 @@ class MouseAgent(BaseAgent):
             return traps, cheese
         return cheese, traps
 
-    def check_reward(self): 
+    def check_outcome(self):
         if self.game.score > self.score:
             self.score = self.game.score
             return 1
@@ -182,20 +182,20 @@ class MouseAgent(BaseAgent):
         self.learner.set_state(self.modify_state(state_now)) # sets all states
         final_action = self.decide(self.learner)
         self.game.play(final_action)
-        reward = self.check_reward() # 1=positive, -1=negative, 0=neutral
-        value = self.calc_reward(reward)
-        self.reward(value)
-        return reward
+        outcome = self.check_outcome() # 1=positive, -1=negative, 0=neutral
+        reward = self.calc_reward(outcome)
+        self.reward(reward)
+        return outcome
 
-    def calc_reward(self, reward):
+    def calc_reward(self, outcome):
         scaling_factor = float(self.game.width + self.game.height) / 2
-        if reward == 1:
-            value = self.scaling[0] * abs(self.cr)
-        elif reward == -1:
-            value = self.scaling[1] * abs(self.tr)
-        else:                                     
-            value = float(self.scaling[2] * abs(self.hr)) / scaling_factor
-        return value
+        if outcome == 1:
+            reward = self.scaling[0] * abs(self.cr)
+        elif outcome == -1:
+            reward = self.scaling[1] * abs(self.tr)
+        else:
+            reward = float(self.scaling[2] * abs(self.hr)) / scaling_factor
+        return reward
 
     # This __ONLY__ exists for monkey patching perform more easily
     def modify_state(self, state):
@@ -270,10 +270,10 @@ class DeterministicMouseAgent(OmniscientMouseAgent):
         final_action = self.policy.get(state_now, self.learner.actions[0])
         # print final_action
         self.game.play(final_action)
-        reward = self.check_reward() # 1=positive, -1=negative, 0=neutral
-        value = self.calc_reward(reward)
-        self.reward(value)
-        return reward
+        outcome = self.check_outcome() # 1=positive, -1=negative, 0=neutral
+        reward = self.calc_reward(outcome)
+        self.reward(reward)
+        return outcome
 
 # Like a regular agent, but instead of seeing a cone, it sees a square around it
 # uses omniscient agent state space logic
@@ -352,10 +352,10 @@ class WrapperMouseAgent(MouseAgent):
         self.learner.set_state(self.modify_state(state_now)) # sets all states
         final_action = self.decide(self.learner) 
         self.game.play(final_action)
-        reward = self.check_reward()
-        value = self.calc_reward(reward)
-        self.reward(value)
-        return reward
+        outcome = self.check_outcome()
+        reward = self.calc_reward(outcome)
+        self.reward(reward)
+        return outcome
 
 # MouseAgent that tracks history
 class HistoricalMouseAgent(MouseAgent):
@@ -522,11 +522,11 @@ class MetaMouseAgent(MouseAgent):
             self.game.render()
             c = raw_input('continue...')
         self.game.play(final_action)
-        reward = self.check_reward()
-        value = self.calc_reward(reward)
+        outcome = self.check_outcome()
+        reward = self.calc_reward(outcome)
         self.next_states = (self.get_fov(self.fov), self.get_fov(self.fov*2))
-        self.reward(value)
-        return reward
+        self.reward(reward)
+        return outcome
 
     # deciding for top (main) learner
     def decide(self, choice):
@@ -594,18 +594,20 @@ class RidgeAgent(MouseAgent):
         self.learner.set_state(self.modify_state(state_now)) # sets all states
         final_action = self.decide(self.learner)
         self.game.play(final_action)
-        reward = self.check_reward() # 1=positive, -1=negative, 0=neutral
+        outcome = self.check_outcome() # 1=positive, -1=negative, 0=neutral
 #       print '{} -> {} -> {}'.format(state_now, final_action, reward)
-        value = self.calc_reward(reward)
-        self.reward(value)
-        return reward
+        reward = self.calc_reward(outcome)
+        self.reward(reward)
+        return outcome
 
     def is_hunger(self, value):
         # disabled for this environment
         return False
         
-    def calc_reward(self, reward):
-        return reward
+    def calc_reward(self, outcome):
+        if outcome == 0:
+            return self.scaling[2] * abs(self.hr) # no scaling
+        return super(RidgeAgent, self).calc_reward(outcome)
 
     def check_reward(self): 
         if self.game.score > self.score:
