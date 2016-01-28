@@ -407,7 +407,7 @@ class HistoricalMouseAgent(MouseAgent):
         if not self.learning: return
         ns = next_state = self.modify_state(self.get_fov(self.fov)) if not terminal else None
         for s in self.selected_history_learners:
-            s.learn(value, ns)
+            s.learn(value, ns, False)
             ns = s.current_state if not terminal else None
             if self.verbose == 3 and value != -2:
                 from pprint import pprint

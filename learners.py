@@ -190,7 +190,7 @@ class HistoryManager(BaseLearner):
             else:
                 print 'error'
 
-    def learn(self, reward, next_state):
+    def learn(self, reward, next_state, recursion=True):
         if self.last_action:
             qnext = self.getQ(self.current_state, self.current_action)
             self.learnQ(self.last_state, self.last_action, self.last_reward, qnext)
@@ -199,10 +199,12 @@ class HistoryManager(BaseLearner):
             self.current_state = None
             self.current_action = None
         self.last_reward = reward
+        if not recursion:
+            return
         if self.current_action   == 'now':
             self.left_learner.learn(reward, next_state)
         elif self.current_action == 'next':
-            self.history_learner.learn(reward, self.current_state if next_state is not None else None)
+            self.history_learner.learn(reward, self.current_state if next_state is not None else None, recursion)
         else:
             raise Exception('Somehow neither learner was selected!')
 
