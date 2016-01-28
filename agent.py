@@ -561,8 +561,6 @@ class RidgeAgent(MouseAgent):
 class DeterministicRidgeAgent(RidgeAgent):
     def __init__(self, game, actions):
         super(DeterministicRidgeAgent, self).__init__(game, actions, learner_class=QLearn)
-
-    def __init__(self, game, actions):
         self.fov = -1
         self.policy = {}
 
