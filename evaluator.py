@@ -127,7 +127,6 @@ def random_evaluate(player, runs=200, round_limit=300, name='rand_eval', distanc
     extra_steps  = 0 # NOTE: Special snowflake, see how used in evaluate
     target_steps = 0 
     data         = []
-    accumulated_reward = [] 
     for _ in xrange(runs):
         current_step = 0
         local_deaths = 0
@@ -136,12 +135,11 @@ def random_evaluate(player, runs=200, round_limit=300, name='rand_eval', distanc
         while current_step < round_limit:
             current_step += 1
             player.game.render()
-            reward = player.perform()
-            accumulated_reward.append(reward)
-            if reward == -1:
+            outcome = player.perform()
+            if outcome == -1:
                 deaths += 1
                 local_deaths += 1
-            if reward == 1: # cheese was acquired
+            if outcome == 1: # cheese was acquired
                 break
         else:   # no cheese was acquired before timeout
             print 'timeout'
