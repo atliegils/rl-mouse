@@ -322,7 +322,7 @@ class WrapperMouseAgent(MouseAgent):
 class HistoricalMouseAgent(MouseAgent):
     def __init__(self, game, actions, levels=2, exploration_rate=0.1, learning_rate=0.2, discount_factor=0.9, learner_class=SARSA, fov=2):
         super(HistoricalMouseAgent, self).__init__(game, actions, exploration_rate=exploration_rate, learning_rate=learning_rate, discount_factor=discount_factor, learner_class=learner_class, fov=fov)
-        self.learners = []
+        self.left_learners = []
         self.learner = None
         self.create_learners(levels, exploration_rate, actions)
         self.levels=levels
@@ -364,27 +364,27 @@ class HistoricalMouseAgent(MouseAgent):
         while top:
             try:
                 if top.left_learner:
-                    self.learners.append(top.left_learner)
+                    self.left_learners.append(top.left_learner)
             except AttributeError:
-                self.learners.append(top) # top doesn't have a left learner because it's SARSA
+                self.left_learners.append(top) # top doesn't have a left learner because it's SARSA
                 break
             try:
                 top = top.history_learner
             except AttributeError:
                 break
-        for ll in self.learners:
+        for ll in self.left_learners:
             print 'registered learner {0}'.format(ll)
         return # done, we hit a dead end
 
     # deciding for top (main) learner
     def decide(self, choice):
-        self.selections = []
+        self.selected_history_learners = []
         learner = self.main_learner
         decision = self._decide(learner)
         if self.verbose == 3: print ''
-#       unselected = [x for x in self.learners if x not in self.selections]
+#       unselected = [x for x in self.left_learners if x not in self.selected_history_learners]
 #       for ll in unselected:
-        for ll in self.learners:
+        for ll in self.left_learners:
             ll.update_action(decision)
             if self.verbose == 3:
                 print '{0} - {1} - {2} - {3} // {4}'.format(ll.last_state, ll.current_state, ll.last_action, ll.current_action, ll)
@@ -401,22 +401,22 @@ class HistoricalMouseAgent(MouseAgent):
             new_learner = learner.history_learner
         else: # final choice
             return choice
-        self.selections.append(learner)
+        self.selected_history_learners.append(learner)
         return self._decide(new_learner)
 
     def reward(self, value):
         if not self.is_hunger(value):
             self.accumulated += value
         if not self.learning: return
-        for s in self.selections:
+        for s in self.selected_history_learners:
             s.learn(value)
             if self.verbose == 3 and value != -2:
                 from pprint import pprint
                 print 'Q-matrix of {0}:'.format(s)
                 pprint(s.q)
                 print 'H{0} rewarded with {1}.'.format(s, value)
-        self.selections = []
-        for s in self.learners:
+        self.selected_history_learners = []
+        for s in self.left_learners:
             if 'forward' in s.actions:
                 s.learn(value)
                 if self.verbose == 3 and value != -2:
