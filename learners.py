@@ -108,7 +108,7 @@ class BaseLearner:
 # Q-learners always expect the best possible outcome -- good for offline agents
 class QLearn(BaseLearner):
     def learn(self, reward, next_state):
-        maxqnew = max([self.getQ(next_state, a) for a in self.actions])
+        maxqnew = max([self.getQ(next_state, a) for a in self.actions]) if next_state is not None else 0
         self.learnQ(self.current_state, self.current_action, reward, maxqnew)
 
 # Note: not using softmax
@@ -141,12 +141,16 @@ class QPLearn(QLearn):
 
 # SARSA learners learn from 'experiences' -- good for online agents
 class SARSA(BaseLearner):
-    def learn(self, reward):
+    def learn(self, reward, next_state):
         if self.current_action and self.last_action and self.current_state is not None and self.last_state is not None:
             qnext = self.getQ(self.current_state, self.current_action)
             self.learnQ(self.last_state, self.last_action, self.last_reward, qnext)
-        else:
-            print 'foo: {0} {1} {2} {3} {4}'.format(self, self.last_state, self.current_state, self.last_action, self.current_action)
+        # else:
+        #     print 'foo: {0} {1} {2} {3} {4}'.format(self, self.last_state, self.current_state, self.last_action, self.current_action)
+        if next_state is None: # terminal state
+            self.learnQ(self.current_state, self.current_action, reward, 0)
+            self.current_state = None
+            self.current_action = None
         self.last_reward = reward
 
 # Learner that optionally selects its action based on a past state
@@ -186,15 +190,19 @@ class HistoryManager(BaseLearner):
             else:
                 print 'error'
 
-    def learn(self, reward):
-        qnext = self.getQ(self.current_state, self.current_action)
+    def learn(self, reward, next_state):
         if self.last_action:
+            qnext = self.getQ(self.current_state, self.current_action)
             self.learnQ(self.last_state, self.last_action, self.last_reward, qnext)
+        if next_state is None: # terminal state
+            self.learnQ(self.current_state, self.current_action, reward, 0)
+            self.current_state = None
+            self.current_action = None
         self.last_reward = reward
         if self.current_action   == 'now':
-            self.left_learner.learn(reward)
+            self.left_learner.learn(reward, next_state)
         elif self.current_action == 'next':
-            self.history_learner.learn(reward)
+            self.history_learner.learn(reward, self.current_state if next_state is not None else None)
         else:
             raise Exception('Somehow neither learner was selected!')
 
@@ -210,15 +218,15 @@ class HistoryManager(BaseLearner):
         else:
             idd(indent+1, self.history_learner, 'H')
 
-    def share_experience(self, reward):
-        if isinstance(self.left_learner, HistoryManager):
-            self.left_learner.share_experience(reward)
+    def share_experience(self, reward, next_state):
+        if isinstance(self.left_learner, HistoryManager): #? is this ever true?
+            self.left_learner.share_experience(reward, next_state)
         else:
-            self.left_learner.learn(reward)
+            self.left_learner.learn(reward, next_state)
         if isinstance(self.history_learner, HistoryManager):
-            self.history_learner.share_experience(reward)
+            self.history_learner.share_experience(reward, self.current_state if next_state is not None else None)
         else:
-            self.history_learner.learn(reward)
+            self.history_learner.learn(reward, self.current_state if next_state is not None else None)
                 
 # Meta learner that forms a tree structure of learners, rewarding an
 class MetaLearner(BaseLearner):
@@ -267,12 +275,10 @@ class MetaLearner(BaseLearner):
         def apply_learn(learner, reward, used=False, next_state=None):
             """Apply learning to sub-learners"""     # avoid code duplication
             if hasattr(learner, 'share_experience'): # delegate reward
-                learner.share_experience(reward)
-            elif isinstance(learner, QLearn):
-                assert next_state, 'No next state supplied for Q-Learner'
-                learner.learn(reward, next_state)
+                learner.share_experience(reward, next_state)
             else:
-                learner.learn(reward)
+                learner.learn(reward, next_state)
+
         apply_learn(self.left_learner, reward, used=(self.left_learner==self.current_action), next_state=next_states[0])
         apply_learn(self.right_learner, reward, used=(self.right_learner==self.current_action), next_state=next_states[1])
 

@@ -157,14 +157,11 @@ class MouseAgent(BaseAgent):
         self.score = 0
         self.game.reset()
 
-    def reward(self, value):
-        if not self.is_hunger(value):
+    def reward(self, value, terminal=False):
+        if not self.is_hunger(value): # exclude hunger rewards from accumulated reward
             self.accumulated += value
         if not self.learning: return
-        if isinstance(self.learner, QLearn): # provide next state for Q-Learners
-            self.learner.learn(value, self.modify_state(self.get_fov(self.fov)))
-        else:
-            self.learner.learn(value)
+        self.learner.learn(value, self.modify_state(self.get_fov(self.fov)) if not terminal else None)
 
     def perform(self, explore=True, last_action=True, verbose=0):
         self.verbose = verbose
@@ -179,7 +176,7 @@ class MouseAgent(BaseAgent):
         self.game.play(final_action)
         outcome = self.check_outcome() # 1=positive, -1=negative, 0=neutral
         reward = self.calc_reward(outcome)
-        self.reward(reward)
+        self.reward(reward, terminal=outcome == 1)
         return outcome
 
     def calc_reward(self, outcome):
@@ -249,7 +246,7 @@ class DeterministicMouseAgent(OmniscientMouseAgent):
         self.game.play(final_action)
         outcome = self.check_outcome() # 1=positive, -1=negative, 0=neutral
         reward = self.calc_reward(outcome)
-        self.reward(reward)
+        self.reward(reward, terminal=outcome == 1)
         return outcome
 
 # Like a regular agent, but instead of seeing a cone, it sees a square around it
@@ -315,7 +312,7 @@ class WrapperMouseAgent(MouseAgent):
         self.game.play(final_action)
         outcome = self.check_outcome()
         reward = self.calc_reward(outcome)
-        self.reward(reward)
+        self.reward(reward, terminal=outcome == 1)
         return outcome
 
 # MouseAgent that tracks history
@@ -404,21 +401,28 @@ class HistoricalMouseAgent(MouseAgent):
         self.selected_history_learners.append(learner)
         return self._decide(new_learner)
 
-    def reward(self, value):
+    def reward(self, value, terminal=False):
         if not self.is_hunger(value):
             self.accumulated += value
         if not self.learning: return
+        ns = next_state = self.modify_state(self.get_fov(self.fov)) if not terminal else None
         for s in self.selected_history_learners:
-            s.learn(value)
+            s.learn(value, ns)
+            ns = s.current_state if not terminal else None
             if self.verbose == 3 and value != -2:
                 from pprint import pprint
                 print 'Q-matrix of {0}:'.format(s)
                 pprint(s.q)
                 print 'H{0} rewarded with {1}.'.format(s, value)
         self.selected_history_learners = []
+        ns = next_state
+        history_learner = self.main_learner
         for s in self.left_learners:
-            if 'forward' in s.actions:
-                s.learn(value)
+            if 'forward' in s.actions: # TODO: remove this if-statement, because I think it's wrong
+                s.learn(value, ns)
+                if hasattr(history_learner, 'history_learner'):
+                    ns = history_learner.current_state if not terminal else None
+                    history_learner = history_learner.history_learner
                 if self.verbose == 3 and value != -2:
                     from pprint import pprint
                     print 'Q-matrix of {0}:'.format(s)
@@ -472,7 +476,7 @@ class MetaMouseAgent(MouseAgent):
         outcome = self.check_outcome()
         reward = self.calc_reward(outcome)
         self.next_states = (self.get_fov(self.fov), self.get_fov(self.fov*2))
-        self.reward(reward)
+        self.reward(reward, terminal=outcome == 1)
         return outcome
 
     # deciding for top (main) learner
@@ -497,11 +501,11 @@ class MetaMouseAgent(MouseAgent):
         self.selections.append(learner)
         return self._decide(new_learner)
 
-    def reward(self, value):
+    def reward(self, value, terminal=False):
         if not self.is_hunger(value):
             self.accumulated += value
         if not self.learning: return
-        self.learner.learn(value, self.next_states)
+        self.learner.learn(value, self.next_states if not terminal else (None, None))
 
 # Like MetaMouseAgent, but set the state of the top level agent to 1/0 depending on if it can see cheese
 class CheeseMeta(MetaMouseAgent):
@@ -539,7 +543,8 @@ class RidgeAgent(MouseAgent):
         outcome = self.check_outcome() # 1=positive, -1=negative, 0=neutral
 #       print '{} -> {} -> {}'.format(state_now, final_action, reward)
         reward = self.calc_reward(outcome)
-        self.reward(reward)
+        self.reward(reward, terminal=outcome != 0)
+
         return outcome
 
     def is_hunger(self, value):
@@ -577,6 +582,6 @@ class DeterministicRidgeAgent(RidgeAgent):
         self.game.play(final_action)
         outcome = self.check_outcome() # 1=positive, -1=negative, 0=neutral
         reward = self.calc_reward(outcome)
-        self.reward(reward)
+        self.reward(reward, terminal=outcome != 0)
         return outcome
 
