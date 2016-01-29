@@ -259,6 +259,58 @@ class RadiusMouseAgent(MouseAgent):
         def modify_state(self, state):
             return state
 
+
+class FOV(object):
+    def __init__(self, spec, center_char='^'):
+        if isinstance(spec, basestring):
+            self.cells = self.init_from_string(spec, center_char)
+        elif isinstance(spec, list):
+            self.cells = spec
+        elif isinstance(spec, type(FOV)):
+            self.cells = spec.cells
+
+    def init_from_string(self, spec, center_char):
+        cells = []
+        center = None
+        y = 0
+        for line in spec.splitlines():
+            x = 0
+            for c in line:
+                if c == center_char:
+                    if center is not None:
+                        raise 'Multiple centers specified in FOV.init_from_string'
+                    center = x, y
+                if c != ' ':
+                    cells.append((x,y))
+                x += 1
+            y += 1
+        if center is None:
+            raise 'No center specified in FOV.init_from_string'
+
+        for i in range(len(cells)):
+            x, y = cells[i]
+            cells[i] = x-center[0], center[1]-y
+        return cells
+
+class CustomMouseAgent(MouseAgent):
+    def __init__(self, game, actions, fov, exploration_rate=0.1, learning_rate=0.2, discount_factor=0.9, learner_class=SARSA):
+        super(CustomMouseAgent, self).__init__(game, actions, exploration_rate=exploration_rate, learning_rate=learning_rate, discount_factor=discount_factor, learner_class=learner_class, fov=None)
+        self.fov = fov
+
+    def get_fov(self, size, m=None, d=None):
+        cheese = self.game.get_relative_location(self.game.cheese)
+        trap = self.game.get_relative_location(self.game.trap)
+        if cheese in self.fov.cells:
+            cheese = 2 ** self.fov.cells.index(cheese)
+        else:
+            cheese = 0
+        if trap in self.fov.cells:
+            trap = 2 ** self.fov.cells.index(trap)
+        else:
+            trap = 0
+        return cheese, trap
+
+
 # example utility class (extend this for debugging!)
 class TraceMouseAgent(MouseAgent):
     def decide(self, learner):
