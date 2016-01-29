@@ -28,12 +28,14 @@ class BaseAgent(object):
 
 # CAT, CHEESE AND TRAP AGENTS
 class MouseAgent(BaseAgent):
-    def __init__(self, game, actions, exploration_rate=0.1, learning_rate=0.2, discount_factor=0.9, fov=2, learner_class=SARSA):
+    def __init__(self, game, actions, exploration_rate=0.1, learning_rate=0.2, discount_factor=0.9, fov=4, learner_class=SARSA, explore=False, last_action=False):
         super(MouseAgent, self).__init__(game, actions, exploration_rate=exploration_rate, learning_rate=learning_rate, discount_factor=discount_factor, learner_class=learner_class)
         self.fov = fov
         self.adjust_rewards( 1,  1,  0 )
         self.reward_scaling([1, -1, -1])
         self.dephased = False
+        self.explore = explore
+        self.observe_last_action = last_action
 
     def adjust_rewards(self, cr, tr, hr):
         self.cr = cr
@@ -163,13 +165,13 @@ class MouseAgent(BaseAgent):
         if not self.learning: return
         self.learner.learn(value, self.modify_state(self.get_fov(self.fov)) if not terminal else None)
 
-    def perform(self, explore=True, last_action=True, verbose=0):
+    def perform(self, explore=None, last_action=None, verbose=0):
         self.verbose = verbose
         state_now = self.get_fov(self.fov)
-        if explore:
+        if explore is None and self.explore or explore:
             explo = self.get_fov(self.fov*2)
             state_now = state_now + (explo[0] + explo[1],)
-        if last_action:
+        if last_action is None and self.observe_last_action or last_action:
             state_now = state_now + (self.learner.current_action,)
         self.learner.set_state(self.modify_state(state_now)) # sets all states
         final_action = self.decide(self.learner)
