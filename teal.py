@@ -43,13 +43,18 @@ def fetch_agent(exercise, game):
     if args.custom_actions:
         agent.replace_actions(args.custom_actions)
     agent.reward_scaling([1, -1, -1])
-    agent.fov = args.fov
+    # agent.fov = args.fov
     if 0 <= args.discount_factor <= 1:
         agent.learner.discount_factor = args.discount_factor
     if 0 <= args.exploration_rate <= 1:
         agent.set_exploration_rate(args.exploration_rate)
     if 0 <= args.learning_rate <= 1:
         agent.learner.learning_rate = args.learning_rate
+    if hasattr(agent, 'fov') and (args.fov > 0 or not agent.fov):
+        print 'fov', agent.fov
+        agent.fov = args.fov if args.fov > 0 else 3
+        print 'fov', agent.fov
+        raw_input('')
     agent.game.suppressed = True
     # train the agent using the provided solution
     load_reward_profile(agent)
@@ -110,7 +115,7 @@ def count_epochs(name):
             # agent.set_exploration_rate(0.0)  # turn off exploration # or don't: let the user do it if they want
             agent.game.reset()      # reset the game
             agent.game.high_score = 0
-            agent.fov  = args.fov
+            # agent.fov  = args.fov
             agent.game = original_game # if the training modifies the game, it is fixed here
             load_reward_profile(agent)
             # evaluate the training results
@@ -191,7 +196,7 @@ if __name__ == '__main__':
     parser.add_argument('solution_name', default='exercise', nargs='?', help='exercise to evaluate')
     parser.add_argument('--outfile', metavar='FILENAME', help='output file name')
     parser.add_argument('-g', '--grid_size', type=int, default=10, help='grid size')
-    parser.add_argument('-f', '--fov', type=int, default=3, help='base field of view')
+    parser.add_argument('-f', '--fov', type=int, default=0, help='base field of view')
     parser.add_argument('--discount_factor', type=float, default=-1, metavar='FLOAT', help='discount factor [0,1]')
     parser.add_argument('--learning_rate', type=float, default=-1, metavar='FLOAT', help='learning rate [0,1]')
     parser.add_argument('--exploration_rate', type=float, default=-1, metavar='FLOAT', help='exploration rate [0,1]')
