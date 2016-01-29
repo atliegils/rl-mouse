@@ -31,7 +31,9 @@ def comparison():
     compare_evals(e1, e2) 
 
 def convert(name):
-    return name.rstrip('.py').replace(os.sep,'.').replace('solutions.','')
+    if name.endswith('.py'):
+        name = name.rstrip('.py')
+    return name.replace(os.sep,'.').replace('solutions.','')
 
 def custom_training(agent):
     # agent.set_exploration_rate(0.1) # just rely on the command line or default settings of the agent
