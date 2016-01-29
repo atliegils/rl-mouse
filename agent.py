@@ -84,21 +84,13 @@ class MouseAgent(BaseAgent):
     def transform(self, x, y):
         d = self.game.direction
         if d == 'right':
-            x1 = x
-            y1 = y
-            x  = y1
-            y  = x1
-        elif d == 'up':
-            x = -x
-            y = -y
+            return y, -x % self.game.height
+        elif d == 'down':
+            return -x % self.game.width, -y
         elif d == 'left':
-            x1 =  x
-            y1 =  y
-            x  = -y1
-            y  = -x1
-        # 'down' = no transformation
-
-        return x,y
+            return -y, x % self.game.height
+        else: # d == 'up'
+            return x % self.game.width, y
 
     # FOV is a the state for the agent
     # the cone counts from left to right and goes size far out
@@ -108,12 +100,8 @@ class MouseAgent(BaseAgent):
             if x % 2 == 0:
                 return x - 1
             return x
-        mouse = self.game.mouse
-        direction = self.game.direction
-        if m:
-            mouse = m
-        if d:
-            direction = d
+        mouse = m if m is not None else self.game.mouse
+        direction = d if d is not None else self.game.direction
         # assume d is up
         cone = []
         for level in xrange(0, size + 1):
@@ -123,8 +111,6 @@ class MouseAgent(BaseAgent):
                 # transform x and y based on direction
                 x,y = self.transform(block - width/2, level)
                 row.append(self.get_woff(x, y, mouse)) # get whatever is at x,y
-            if direction == 'up': # edge case, mirror around y axis
-                row = row[::-1]
             cone.append(row)
         fov = self.create_cone(cone)
         if self.game.easy:
@@ -133,8 +119,8 @@ class MouseAgent(BaseAgent):
 
     def create_cone(self, cone):
         flat = [i for s in cone for i in s]
-#       print cone
-#       print flat
+        # print cone
+        # print flat
         bstr = ''.join(map(str,flat))
         cheese = int(bstr.replace('-1','0')[::-1], 2)
         traps = int(bstr.replace('-1', '2').replace('1', '0').replace('2', '1')[::-1], 2)
@@ -258,32 +244,17 @@ class RadiusMouseAgent(MouseAgent):
         super(RadiusMouseAgent, self).__init__(game, actions, exploration_rate=exploration_rate, learning_rate=learning_rate, discount_factor=discount_factor, learner_class=learner_class, fov=fov)
 
     def get_fov(self, radius=3):
-        m_loc = self.game.mouse
-        cheese = (self.game.cheese[0] - m_loc[0] + self.game.width) % self.game.width, (self.game.cheese[1] - m_loc[1] + self.game.height) % self.game.height
-        # get trap relative to mouse
-        trap = (self.game.trap[0] - m_loc[0] + self.game.width) % self.game.width, (self.game.trap[1] - m_loc[1] + self.game.height) % self.game.height
-        # now rotate cheese and trap around the origin depending on direction
-        # also remove things that are out of range
-        def rotate_and_mask(item, angle):
-            x,y = item
-            xp = x * math.cos(math.radians(angle)) - y * math.sin(math.radians(angle))
-            yp = x * math.sin(math.radians(angle)) + y * math.cos(math.radians(angle))
-#           print '{0}R, xy {1} {2}; dxdy {3} {4}'.format(radius, x, y, xp, yp)
-            # if the item is out of our view, we don't see it
-            if abs(xp) > radius or abs(yp) > radius:
-                return 0,0
-            return int(xp), int(yp)
-        direction = self.game.direction
-        if direction == 'up':
-            angle = 0.0
-        elif direction == 'right':
-            angle = 90.0
-        elif direction == 'down':
-            angle = 180.0
-        elif direction == 'left':
-            angle = 270.0
-        # return the location of visible items, or (0,0) for any item that is not visible
-        return rotate_and_mask(cheese, angle), rotate_and_mask(trap, angle)
+        cx, cy = self.game.get_relative_location(self.game.cheese)
+        tx, ty = self.game.get_relative_location(self.game.trap)
+        if abs(cx) > radius or abs(cy) > radius or abs(cx)+abs(cy) >= 2*radius:
+            cx, cy = 0, 0
+        if abs(tx) > radius or abs(ty) > radius or abs(tx)+abs(ty) >= 2*radius:
+            tx, ty = 0, 0
+
+        cheese = cx + (2*radius+1)*cy
+        trap   = tx + (2*radius+1)*ty
+
+        return cheese, trap
 
         def modify_state(self, state):
             return state
